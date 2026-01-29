@@ -3,7 +3,7 @@
  * Provides typed interface for interacting with GenLayer smart contracts
  */
 
-import { createClient } from "genlayer-js";
+import { createClient, createAccount } from "genlayer-js";
 import { studionet } from "genlayer-js/chains";
 import { TransactionStatus } from "genlayer-js/types";
 import { logger, LogCategory, logBlockchain } from "./logger";
@@ -18,12 +18,45 @@ let defaultClient = createClient({
   endpoint: resolveEndpoint()
 });
 
+// Server-side client with private key for write operations (cron jobs)
+let serverClient: ReturnType<typeof createClient> | null = null;
+
 /**
  * Get the default GenLayer client instance (read-only)
  * For write operations, use the client from useGenLayerSigner hook
  */
 export function getClient() {
   return defaultClient;
+}
+
+/**
+ * Get server-side GenLayer client with private key for write operations
+ * Used by cron jobs and server-side functions that need to sign transactions
+ */
+export function getServerClient() {
+  if (!serverClient) {
+    const privateKey = process.env.GENLAYER_PRIVATE_KEY;
+
+    if (!privateKey) {
+      throw new Error('GENLAYER_PRIVATE_KEY environment variable is not set. Required for server-side write operations.');
+    }
+
+    // Create account from private key
+    const account = createAccount(privateKey as `0x${string}`);
+
+    // Create client with account for write operations
+    serverClient = createClient({
+      chain: studionet,
+      endpoint: resolveEndpoint(),
+      account: account
+    });
+
+    logger.info(LogCategory.BLOCKCHAIN, 'Server-side GenLayer client initialized', {
+      metadata: { accountAddress: account.address }
+    });
+  }
+
+  return serverClient;
 }
 
 /**
@@ -657,10 +690,13 @@ export async function evaluateSingleArgument(
   });
 
   try {
-    // Ensure consensus smart contract is initialized
-    await defaultClient.initializeConsensusSmartContract?.();
+    // Get server client with private key for write operations
+    const client = getServerClient();
 
-    const result = await defaultClient.writeContract({
+    // Ensure consensus smart contract is initialized
+    await client.initializeConsensusSmartContract?.();
+
+    const result = await client.writeContract({
       address: contractAddress as `0x${string}`,
       functionName: "evaluate_single_argument",
       args: [participantAddress, argumentContent],
@@ -668,7 +704,7 @@ export async function evaluateSingleArgument(
     });
 
     // Wait for transaction to be confirmed
-    const receipt = await defaultClient.waitForTransactionReceipt?.({
+    const receipt = await client.waitForTransactionReceipt?.({
       hash: result as any,
       status: 'ACCEPTED' as any,
       retries: 50,

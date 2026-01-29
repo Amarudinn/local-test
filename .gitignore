@@ -1,0 +1,168 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+.env
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# ============================================================================
+# Documentation Files (exclude all .md except README.md)
+# ============================================================================
+# Task summaries and documentation
+TASK_*.md
+*_SUMMARY.md
+*_GUIDE.md
+*_EXPLANATION.md
+*_CHECKLIST.md
+*_REFERENCE.md
+*_INSTRUCTIONS.md
+*_COMPLETE.md
+*_FIXES.md
+*_FIX.md
+*_IMPLEMENTATION.md
+*_ARCHITECTURE.md
+*_SETUP.md
+*_QUICKSTART.md
+
+# Specific documentation files
+CONCEPT.md
+FRONTEND_DESIGN.md
+DEPLOYMENT_GUIDE.md
+DEPLOYMENT_CHECKLIST.md
+CONTRACT_DEPLOYMENT_GUIDE.md
+CONTRACT_AUDIT_CHECKLIST.md
+ENVIRONMENT_VARIABLES.md
+TESTING_GUIDE.md
+RUNNING_FRONTEND.md
+VERCEL_DEPLOYMENT.md
+WALLET_INTEGRATION_UPGRADE.md
+MIGRATION_COMPLETE_EIP1193.md
+PRIVY_WALLET_METHODS_COMPARISON.md
+DEBUG_*.md
+PANDUAN_*.md
+PENJELASAN_*.md
+QUICK_REFERENCE_*.md
+SCALABILITY_*.md
+UI_LAYOUT_*.md
+DATA_FETCHING_*.md
+HYBRID_*.md
+AI_JUDGE_*.md
+DEBATE_LIFECYCLE_*.md
+SMART_*.md
+SYNC_QUEUE_*.md
+MONITORING_*.md
+IMPLEMENTATION_*.md
+GITIGNORE_UPDATE.md
+
+# Keep README.md (important for GitHub)
+!README.md
+
+# ============================================================================
+# Testing Files
+# ============================================================================
+# Test scripts in scripts folder
+scripts/test-*.ts
+scripts/test-*.js
+scripts/check-*.ts
+scripts/check-*.js
+scripts/verify-*.ts
+scripts/debug-*.ts
+scripts/force-*.js
+scripts/manual-*.js
+scripts/generate-*.js
+
+# Test files
+**/__tests__/
+*.test.ts
+*.test.tsx
+*.test.js
+*.spec.ts
+*.spec.tsx
+*.spec.js
+
+# ============================================================================
+# Deployment & Build Files
+# ============================================================================
+# Deployment records (optional - uncomment if you don't want to track)
+deployments/
+deploy-test.py
+
+# ============================================================================
+# Database & Migration Files (optional)
+# ============================================================================
+# Uncomment if you want to exclude certain migration files
+# supabase/migrations/verify_schema.sql
+# supabase/migrations/00_apply_all_migrations.sql
+# supabase/migrations/CLEAN_ALL_DATA.sql
+# supabase/migrations/FIX_*.sql
+
+# ============================================================================
+# Kiro Specs (development planning files)
+# ============================================================================
+.kiro/specs/
+
+# ============================================================================
+# Example & Template Files (keep these for reference)
+# ============================================================================
+# Keep .env.example and .env.production.example
+!.env.example
+!.env.production.example
+
+# ============================================================================
+# Library Examples (optional - uncomment to exclude)
+# ============================================================================
+lib/examples/

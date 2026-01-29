@@ -715,13 +715,38 @@ export async function evaluateSingleArgument(
     // GenLayer returns the evaluation result in the receipt data
     let evaluationData: any;
 
+    // Debug: Log raw receipt and result
+    logger.info(LogCategory.BLOCKCHAIN, "Raw GenLayer response", {
+      metadata: {
+        receiptType: typeof receipt,
+        resultType: typeof result,
+        hasReceipt: !!receipt,
+        receiptData: receipt?.data ? JSON.stringify(receipt.data).substring(0, 500) : 'no data',
+        resultStr: result ? JSON.stringify(result).substring(0, 500) : 'no result'
+      }
+    });
+
     if (receipt?.data?.result) {
       evaluationData = receipt.data.result;
+    } else if (receipt?.result) {
+      evaluationData = receipt.result;
     } else if (result instanceof Map) {
       evaluationData = Object.fromEntries(result);
-    } else {
+    } else if (typeof result === 'object' && result !== null) {
       evaluationData = result;
+    } else {
+      evaluationData = {};
     }
+
+    // Debug: Log parsed evaluation data
+    logger.info(LogCategory.BLOCKCHAIN, "Parsed evaluation data", {
+      metadata: {
+        dataType: typeof evaluationData,
+        isMap: evaluationData instanceof Map,
+        keys: evaluationData ? Object.keys(evaluationData) : [],
+        dataStr: JSON.stringify(evaluationData).substring(0, 500)
+      }
+    });
 
     // Convert Map to object if needed
     if (evaluationData instanceof Map) {
@@ -738,23 +763,38 @@ export async function evaluateSingleArgument(
       };
     }
 
+    // Calculate total score if not provided
+    const logicScore = Number(evaluationData.logic_reasoning) || 0;
+    const evidenceScore = Number(evaluationData.evidence_facts) || 0;
+    const clarityScore = Number(evaluationData.clarity) || 0;
+    const relevanceScore = Number(evaluationData.relevance) || 0;
+    const originalityScore = Number(evaluationData.originality) || 0;
+    const persuasivenessScore = Number(evaluationData.persuasiveness) || 0;
+
+    const calculatedTotal = logicScore + evidenceScore + clarityScore +
+      relevanceScore + originalityScore + persuasivenessScore;
+
+    const totalScore = Number(evaluationData.total_score) || calculatedTotal;
+
     logger.info(LogCategory.BLOCKCHAIN, "Argument evaluation completed", {
       contractAddress,
       metadata: {
         participantAddress,
-        score: evaluationData.total_score
+        totalScore,
+        calculatedTotal,
+        breakdown: { logicScore, evidenceScore, clarityScore, relevanceScore, originalityScore, persuasivenessScore }
       }
     });
 
     return {
       participant_address: participantAddress,
-      total_score: Number(evaluationData.total_score) || 0,
-      logic_reasoning: Number(evaluationData.logic_reasoning) || 0,
-      evidence_facts: Number(evaluationData.evidence_facts) || 0,
-      clarity: Number(evaluationData.clarity) || 0,
-      relevance: Number(evaluationData.relevance) || 0,
-      originality: Number(evaluationData.originality) || 0,
-      persuasiveness: Number(evaluationData.persuasiveness) || 0,
+      total_score: totalScore,
+      logic_reasoning: logicScore,
+      evidence_facts: evidenceScore,
+      clarity: clarityScore,
+      relevance: relevanceScore,
+      originality: originalityScore,
+      persuasiveness: persuasivenessScore,
       reasoning: String(evaluationData.reasoning || ''),
     };
 

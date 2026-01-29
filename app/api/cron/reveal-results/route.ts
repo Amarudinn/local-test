@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
         const { data: endedDebates, error: debatesError } = await client
             .from('debates')
             .select('id, contract_address, topic, participant_count')
-            .eq('status', 'ONGOING')
+            .eq('status', 'ENDED')
             .lt('end_time', now);
 
         if (debatesError) {

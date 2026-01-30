@@ -1,15 +1,16 @@
 {
     "name": "ruang-debat-cron-worker",
-    "version": "1.0.0",
-    "description": "VPS Cron Worker for Ruang Debat - Processes AI evaluations",
+    "version": "2.0.0",
+    "description": "VPS Direct Processor for Ruang Debat - Processes AI evaluations directly",
     "main": "index.js",
     "scripts": {
         "start": "node index.js",
         "dev": "node index.js"
     },
     "dependencies": {
+        "@supabase/supabase-js": "^2.39.0",
         "dotenv": "^16.3.1",
-        "node-fetch": "^2.7.0"
+        "genlayer-js": "^0.6.2"
     },
     "engines": {
         "node": ">=18.0.0"

@@ -1,12 +1,13 @@
-# VPS Cron Worker for Ruang Debat
+# VPS Direct Processor for Ruang Debat
 
-Script Node.js sederhana yang berjalan di VPS kamu untuk memproses evaluasi AI.
+Script Node.js yang berjalan di VPS dan memproses evaluasi AI **langsung** tanpa melalui Vercel.
 
 ## Kenapa Pakai Ini?
 
-- Vercel Free plan hanya 10 detik timeout
-- GenLayer AI butuh 2-5 menit untuk evaluasi
-- VPS tidak ada batasan timeout
+```
+❌ Lama: VPS → Vercel API → [10s timeout] → Gagal
+✅ Baru: VPS → Supabase + GenLayer langsung → Sukses!
+```
 
 ## Setup di VPS
 
@@ -21,17 +22,18 @@ curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs
 ```
 
-### 3. Upload folder ini ke VPS
+### 3. Clone/Update repo
 ```bash
-# Dari komputer lokal:
-scp -r cron-worker user@your-vps-ip:/home/user/
-```
+# Clone baru
+git clone https://github.com/Amarudinn/local-test.git
+cd local-test/cron-worker
 
-Atau clone dari GitHub lalu masuk ke folder cron-worker.
+# Atau update yang sudah ada
+cd local-test && git pull && cd cron-worker
+```
 
 ### 4. Install dependencies
 ```bash
-cd /home/user/cron-worker
 npm install
 ```
 
@@ -41,10 +43,12 @@ cp .env.example .env
 nano .env
 ```
 
-Isi dengan:
+Isi dengan nilai dari Supabase dan GenLayer:
 ```
-API_BASE_URL=https://local-test-three.vercel.app
-CRON_SECRET=your-actual-cron-secret
+SUPABASE_URL=https://xxx.supabase.co
+SUPABASE_KEY=eyJ...
+GENLAYER_RPC_URL=https://studio.genlayer.com/api
+GENLAYER_PRIVATE_KEY=0x...
 ```
 
 ### 6. Test jalankan
@@ -52,50 +56,22 @@ CRON_SECRET=your-actual-cron-secret
 npm start
 ```
 
-Kamu akan melihat log seperti:
-```
-{"timestamp":"...","level":"info","message":"🚀 VPS Cron Worker starting",...}
-{"timestamp":"...","level":"info","message":"Starting Process Evaluation Queue",...}
-```
-
 ### 7. Jalankan dengan PM2 (Production)
-
-PM2 akan menjaga script tetap berjalan dan restart otomatis jika crash.
-
 ```bash
-# Install PM2
 sudo npm install -g pm2
-
-# Start dengan PM2
-pm2 start index.js --name "ruang-debat-cron"
-
-# Auto-start saat VPS reboot
-pm2 startup
-pm2 save
-
-# Lihat logs
-pm2 logs ruang-debat-cron
-
-# Restart jika perlu
-pm2 restart ruang-debat-cron
-
-# Stop
-pm2 stop ruang-debat-cron
+pm2 start index.js --name "ruang-debat"
+pm2 startup && pm2 save
+pm2 logs ruang-debat
 ```
 
-## Matikan Cron di cron-job.org
+## Matikan cron-job.org
 
-Setelah VPS berjalan, **matikan** cron jobs di cron-job.org agar tidak duplikat.
+Karena VPS memproses langsung, **matikan** semua cron jobs di cron-job.org.
 
 ## Troubleshooting
 
-### Connection refused
-- Pastikan Vercel URL benar
-- Cek firewall VPS (port 443 harus bisa keluar)
-
-### Unauthorized (401)
-- CRON_SECRET tidak cocok dengan yang di Vercel
-
-### Timeout
-- Normal untuk GenLayer AI (2-5 menit)
-- Script sudah handle dengan timeout 5 menit
+| Error | Solusi |
+|-------|--------|
+| Missing SUPABASE_URL | Isi .env dengan benar |
+| GenLayer timeout | Normal, AI butuh 2-5 menit |
+| Cannot find module | Jalankan `npm install` |

@@ -18,6 +18,7 @@ export interface Debate {
   end_time: Date;
   status: DebateStatus;
   participant_count: number;
+  max_participants?: number; // Optional for backward compatibility
   last_synced_at: Date | null;
   updated_at: Date;
 }

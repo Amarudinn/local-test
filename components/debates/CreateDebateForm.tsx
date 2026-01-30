@@ -184,6 +184,7 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
             end_time: endTime,
             status: 'OPEN',
             participant_count: 0,
+            max_participants: finalMaxParticipants, // Custom or default (10)
             last_synced_at: null,
           });
 

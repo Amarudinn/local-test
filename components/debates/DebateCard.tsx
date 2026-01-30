@@ -20,7 +20,7 @@ interface DebateCardProps {
 export function DebateCard({ debate }: DebateCardProps) {
   const router = useRouter();
   const [isExpanded, setIsExpanded] = useState(false);
-  
+
   // Check if topic is long (more than 80 characters)
   const isLongTopic = debate.topic.length > 80;
 
@@ -28,7 +28,7 @@ export function DebateCard({ debate }: DebateCardProps) {
   const handleClick = () => {
     router.push(`/debates/${debate.contract_address}`);
   };
-  
+
   // Handle show more/less toggle - prevent card navigation
   const handleToggleExpand = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
@@ -39,21 +39,21 @@ export function DebateCard({ debate }: DebateCardProps) {
   // Database already calculates end_time = created_at + duration_minutes
   const endTimeValue = new Date(debate.end_time).getTime();
   const isActive = endTimeValue > Date.now();
-  
+
   // Check if time has expired (client-side check)
   const timeHasExpired = endTimeValue <= Date.now();
-  
+
   // Compute effective status for display (considers time expiration)
   // If time has expired but database still shows ONGOING, display as ENDED
-  const effectiveStatus = 
+  const effectiveStatus =
     debate.status === 'ONGOING' && timeHasExpired ? 'ENDED' : debate.status;
-  
-  // Check if debate is full (max 10 participants)
-  const maxParticipants = 10;
-  const isFull = debate.participant_count >= maxParticipants;
+
+  // Check if debate is full (use debate.max_participants if available, default to 10)
+  const maxParticipants = debate.max_participants || 10;
+  const isFull = maxParticipants > 0 && debate.participant_count >= maxParticipants;
 
   return (
-    <Card 
+    <Card
       className="cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] flex flex-col"
       onClick={handleClick}
     >
@@ -92,14 +92,14 @@ export function DebateCard({ debate }: DebateCardProps) {
           <div className="flex items-center justify-between gap-2">
             <span className="flex-shrink-0">Participants:</span>
             <span className="font-semibold">
-              {debate.participant_count}/{maxParticipants}
+              {debate.participant_count}/{maxParticipants === 0 ? '∞' : maxParticipants}
               {isFull && <span className="text-red-500 ml-1">(Full)</span>}
             </span>
           </div>
           <div className="flex items-center justify-between gap-2">
             <span className="flex-shrink-0">Time:</span>
             {isActive ? (
-              <CountdownTimer 
+              <CountdownTimer
                 endTime={Math.floor(endTimeValue / 1000)}
                 showIcon={false}
               />

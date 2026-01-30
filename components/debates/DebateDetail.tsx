@@ -538,9 +538,9 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
   const effectiveStatus: DebateStatus =
     status === 'ONGOING' && timeHasExpired ? 'ENDED' : status;
 
-  // Check if debate is full
-  const maxParticipants = displayData.max_participants || 10; // Default to 10 if not set
-  const isFull = displayData.participant_count >= maxParticipants;
+  // Check if debate is full - use evaluationCriteria from blockchain (more accurate)
+  const maxParticipants = evaluationCriteria?.max_participants || displayData.max_participants || 10;
+  const isFull = maxParticipants > 0 && displayData.participant_count >= maxParticipants;
 
   const showJoinButton = authenticated && signerReady && isOpen && !userHasJoined && !timeHasExpired && !isFull;
   const showResolveButton = signerReady && hasEnded && !isResolved;
@@ -557,7 +557,7 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
                 <StatusBadge status={effectiveStatus} />
                 <Badge variant="outline" className="gap-1 text-xs md:text-sm">
                   <Users className="h-3 w-3" />
-                  {displayData.participant_count}/{maxParticipants} {displayData.participant_count === 1 ? 'participant' : 'participants'}
+                  {displayData.participant_count}/{maxParticipants === 0 ? '∞' : maxParticipants} {displayData.participant_count === 1 ? 'participant' : 'participants'}
                 </Badge>
                 {isFull && isOpen && (
                   <Badge variant="destructive" className="text-xs">

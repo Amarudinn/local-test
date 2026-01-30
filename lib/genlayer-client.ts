@@ -93,6 +93,8 @@ export function getServerClient() {
  * @param topic - Debate title (1-200 characters)
  * @param description - Detailed explanation (1-1000 characters)
  * @param durationMinutes - Debate duration in minutes (must be positive integer)
+ * @param maxParticipants - Maximum participants (0 = unlimited, default: 10)
+ * @param evaluationCriteria - Custom evaluation criteria weights (must sum to 100)
  * @returns Contract address and transaction hash
  * @throws Error if deployment fails or validation fails
  */
@@ -100,8 +102,27 @@ export async function deployDebateContract(
   client: any,
   topic: string,
   description: string,
-  durationMinutes: number
+  durationMinutes: number,
+  maxParticipants: number = 10,
+  evaluationCriteria?: {
+    logic_reasoning: number;
+    evidence_facts: number;
+    clarity: number;
+    relevance: number;
+    originality: number;
+    persuasiveness: number;
+  }
 ): Promise<{ contractAddress: string; transactionHash: string }> {
+  // Default criteria if not provided
+  const criteria = evaluationCriteria || {
+    logic_reasoning: 25,
+    evidence_facts: 20,
+    clarity: 15,
+    relevance: 15,
+    originality: 15,
+    persuasiveness: 10,
+  };
+
   // Client-side validation
   if (!topic || topic.length === 0 || topic.length > 200) {
     throw new Error("Topic must be between 1 and 200 characters");
@@ -115,8 +136,15 @@ export async function deployDebateContract(
     throw new Error("Duration must be a positive integer (in minutes)");
   }
 
+  // Validate criteria sum to 100
+  const criteriaSum = criteria.logic_reasoning + criteria.evidence_facts + criteria.clarity +
+    criteria.relevance + criteria.originality + criteria.persuasiveness;
+  if (criteriaSum !== 100) {
+    throw new Error(`Evaluation criteria must sum to 100, got ${criteriaSum}`);
+  }
+
   logger.info(LogCategory.BLOCKCHAIN, "Deploying DebateRoom contract", {
-    metadata: { topic, durationMinutes }
+    metadata: { topic, durationMinutes, maxParticipants, criteria }
   });
 
   try {
@@ -127,10 +155,21 @@ export async function deployDebateContract(
     // Note: In production, this should be bundled or fetched from a reliable source
     const contractCode = await fetch('/contracts/debate_room.py').then(res => res.text());
 
-    // Deploy the contract with duration in minutes (integer)
+    // Deploy the contract with all parameters
     const transactionHash = await client.deployContract({
       code: contractCode,
-      args: [topic, description, durationMinutes],
+      args: [
+        topic,
+        description,
+        durationMinutes,
+        maxParticipants,
+        criteria.logic_reasoning,
+        criteria.evidence_facts,
+        criteria.clarity,
+        criteria.relevance,
+        criteria.originality,
+        criteria.persuasiveness
+      ],
     });
 
     logger.info(LogCategory.BLOCKCHAIN, "Contract deployment transaction submitted", {

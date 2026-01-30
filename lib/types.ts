@@ -111,3 +111,43 @@ export const VALIDATION = {
   ARGUMENT_MIN_LENGTH: 1,
   ARGUMENT_MAX_LENGTH: 500,
 } as const;
+
+// ============================================================================
+// Evaluation Criteria Types
+// ============================================================================
+
+export interface EvaluationCriteria {
+  logic_reasoning: number;    // Weight for logical soundness
+  evidence_facts: number;     // Weight for evidence and facts
+  clarity: number;            // Weight for clarity
+  relevance: number;          // Weight for relevance
+  originality: number;        // Weight for originality
+  persuasiveness: number;     // Weight for persuasiveness
+}
+
+export const DEFAULT_EVALUATION_CRITERIA: EvaluationCriteria = {
+  logic_reasoning: 25,
+  evidence_facts: 20,
+  clarity: 15,
+  relevance: 15,
+  originality: 15,
+  persuasiveness: 10,
+};
+
+// ============================================================================
+// Max Participants Options
+// ============================================================================
+
+export interface ParticipantOption {
+  label: string;
+  value: number;  // 0 = unlimited
+}
+
+export const DEFAULT_MAX_PARTICIPANTS = 10;
+
+export const PARTICIPANT_OPTIONS: ParticipantOption[] = [
+  { label: '20 participants', value: 20 },
+  { label: '50 participants', value: 50 },
+  { label: '100 participants', value: 100 },
+  { label: 'Unlimited', value: 0 },
+];

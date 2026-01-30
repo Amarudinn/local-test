@@ -18,13 +18,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { deployDebateContract } from '@/lib/genlayer-client';
 import { supabaseApi } from '@/lib/supabase-client';
 import { useGenLayerSigner } from '@/lib/hooks/useGenLayerSigner';
-import { 
-  DURATION_OPTIONS, 
+import {
+  DURATION_OPTIONS,
   durationToHours,
-  durationToMinutes, 
+  durationToMinutes,
   VALIDATION,
-  type CreateDebateFormData 
+  PARTICIPANT_OPTIONS,
+  DEFAULT_MAX_PARTICIPANTS,
+  DEFAULT_EVALUATION_CRITERIA,
+  type CreateDebateFormData,
+  type EvaluationCriteria
 } from '@/lib/types';
+import { Switch } from '@/components/ui/switch';
 import { logger, LogCategory } from '@/lib/logger';
 import { toast } from '@/lib/toast';
 
@@ -37,14 +42,22 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
   const router = useRouter();
   const { authenticated, user } = usePrivy();
   const { ready: signerReady, client, walletAddress } = useGenLayerSigner();
-  
+
   // Form state
   const [formData, setFormData] = useState<CreateDebateFormData>({
     topic: '',
     description: '',
     duration: '24h', // Default to 24 hours
   });
-  
+
+  // Custom participants state
+  const [useCustomParticipants, setUseCustomParticipants] = useState(false);
+  const [maxParticipants, setMaxParticipants] = useState(DEFAULT_MAX_PARTICIPANTS);
+
+  // Custom evaluation criteria state
+  const [useCustomCriteria, setUseCustomCriteria] = useState(false);
+  const [criteria, setCriteria] = useState<EvaluationCriteria>({ ...DEFAULT_EVALUATION_CRITERIA });
+
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof CreateDebateFormData, string>>>({});
@@ -56,7 +69,7 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
    */
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof CreateDebateFormData, string>> = {};
-    
+
     // Validate topic
     if (!formData.topic.trim()) {
       newErrors.topic = 'Topic is required';
@@ -65,7 +78,7 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
     } else if (formData.topic.length > VALIDATION.TOPIC_MAX_LENGTH) {
       newErrors.topic = `Topic must be ${VALIDATION.TOPIC_MAX_LENGTH} characters or less`;
     }
-    
+
     // Validate description
     if (!formData.description.trim()) {
       newErrors.description = 'Description is required';
@@ -74,14 +87,14 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
     } else if (formData.description.length > VALIDATION.DESCRIPTION_MAX_LENGTH) {
       newErrors.description = `Description must be ${VALIDATION.DESCRIPTION_MAX_LENGTH} characters or less`;
     }
-    
+
     // Validate duration
     if (!formData.duration) {
       newErrors.duration = 'Duration is required';
     } else if (!DURATION_OPTIONS.find(opt => opt.value === formData.duration)) {
       newErrors.duration = 'Please select a valid duration';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -91,71 +104,77 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
    */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Clear previous errors
     setGeneralError('');
-    
+
     // Check authentication
     if (!authenticated || !user) {
       setGeneralError('You must be logged in to create a debate');
       return;
     }
-    
+
     // Check if signer is ready
     if (!signerReady || !client) {
       setGeneralError('Wallet is not ready. Please wait a moment and try again.');
       return;
     }
-    
+
     // Validate form
     if (!validateForm()) {
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
       logger.info(LogCategory.UI, 'Creating debate', {
         metadata: { topic: formData.topic, duration: formData.duration }
       });
-      
+
       // Convert duration to minutes for both contract and database (integer)
       const durationMinutes = durationToMinutes(formData.duration);
-      
+
+      // Prepare parameters
+      const finalMaxParticipants = useCustomParticipants ? maxParticipants : DEFAULT_MAX_PARTICIPANTS;
+      const finalCriteria = useCustomCriteria ? criteria : DEFAULT_EVALUATION_CRITERIA;
+
       // Deploy contract to blockchain using client from hook
       const { contractAddress } = await deployDebateContract(
         client,
         formData.topic.trim(),
         formData.description.trim(),
-        durationMinutes // Send minutes as integer to contract
+        durationMinutes, // Send minutes as integer to contract
+        finalMaxParticipants,
+        finalCriteria
       );
-      
+
       logger.info(LogCategory.UI, 'Contract deployed successfully', {
         contractAddress,
         metadata: { topic: formData.topic }
       });
-      
+
       // HYBRID APPROACH: Try immediate sync with retry, fallback to queue if it fails
       // Database will calculate end_time = created_at + duration_minutes for UI countdown
       // Contract timer starts when first participant joins (for blockchain logic)
-      
+
       let syncSuccess = false;
       let retryCount = 0;
       const maxRetries = 3;
-      
+
       while (!syncSuccess && retryCount < maxRetries) {
         try {
           // Calculate end_time for database (timer starts NOW for UI)
           const now = new Date();
           // Calculate end_time using minutes
           const endTime = new Date(now.getTime() + durationMinutes * 60 * 1000);
-          
+
           // Wait a bit before first retry (give blockchain time to process)
           if (retryCount > 0) {
             await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
             console.log(`Retry ${retryCount}/${maxRetries} - Attempting to sync debate...`);
           }
-          
+
           // Create debate directly in database (no need to fetch from blockchain)
           await supabaseApi.createDebate({
             contract_address: contractAddress,
@@ -167,30 +186,30 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
             participant_count: 0,
             last_synced_at: null,
           });
-          
+
           syncSuccess = true;
           logger.info(LogCategory.UI, 'Debate synced successfully', {
             contractAddress,
             metadata: { topic: formData.topic, retryCount }
           });
-          
+
           // Show success message
           toast.success('Debate created successfully!', 'Your debate is now live.');
-          
+
         } catch (syncError) {
           retryCount++;
-          
+
           if (retryCount >= maxRetries) {
             // Max retries reached, try to queue for background processing
             logger.warn(LogCategory.UI, 'Immediate sync failed after retries, attempting to queue', {
               contractAddress,
-              metadata: { 
+              metadata: {
                 error: syncError instanceof Error ? syncError.message : String(syncError),
                 topic: formData.topic,
                 retries: retryCount
               }
             });
-            
+
             // Skip queueing if sync_queue table doesn't exist yet
             const errorMessage = syncError instanceof Error ? syncError.message : '';
             if (errorMessage.includes('sync_queue') || errorMessage.includes('attempts')) {
@@ -198,15 +217,15 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                 contractAddress,
                 metadata: { topic: formData.topic }
               });
-              
+
               // Show success message anyway (contract is deployed)
               toast.success(
-                'Debate created successfully!', 
+                'Debate created successfully!',
                 'Your debate has been deployed. Please refresh the page in a few minutes to see it.'
               );
               break;
             }
-            
+
             try {
               await supabaseApi.queueSyncOperation({
                 sync_type: 'debate_creation',
@@ -224,18 +243,18 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                 status: 'pending',
                 last_error: null,
               });
-              
+
               logger.info(LogCategory.UI, 'Debate queued for background sync', {
                 contractAddress,
                 metadata: { topic: formData.topic }
               });
-              
+
               // Show success message with note about delay
               toast.success(
-                'Debate created successfully!', 
+                'Debate created successfully!',
                 'Your debate will appear in a few minutes as the blockchain processes it.'
               );
-              
+
             } catch (queueError) {
               // Even queueing failed - log but don't fail the whole operation
               logger.error(
@@ -243,17 +262,17 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                 'Failed to queue sync operation',
                 queueError instanceof Error ? queueError : new Error(String(queueError))
               );
-              
+
               // Show success message anyway (contract is deployed)
               toast.success(
-                'Debate created successfully!', 
+                'Debate created successfully!',
                 'Your debate has been deployed. Please refresh in a few minutes.'
               );
             }
           }
         }
       }
-      
+
       // Call success callback or redirect (proceed even if sync failed)
       if (onSuccess) {
         onSuccess(contractAddress);
@@ -267,7 +286,7 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
         'Failed to create debate',
         error instanceof Error ? error : new Error(String(error))
       );
-      
+
       // Set user-friendly error message
       if (error instanceof Error) {
         setGeneralError(error.message);
@@ -381,6 +400,174 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
             </p>
           </div>
 
+          {/* Max Participants Field */}
+          <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm md:text-base font-medium">
+                Max Participants
+              </Label>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">
+                  {useCustomParticipants ? 'Custom' : 'Default (10)'}
+                </span>
+                <Switch
+                  checked={useCustomParticipants}
+                  onCheckedChange={setUseCustomParticipants}
+                  disabled={isSubmitting}
+                />
+              </div>
+            </div>
+
+            {useCustomParticipants && (
+              <Select
+                value={String(maxParticipants)}
+                onValueChange={(value) => setMaxParticipants(Number(value))}
+                disabled={isSubmitting}
+              >
+                <SelectTrigger className="text-sm md:text-base">
+                  <SelectValue placeholder="Select max participants" />
+                </SelectTrigger>
+                <SelectContent>
+                  {PARTICIPANT_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={String(option.value)} className="text-sm md:text-base">
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            <p className="text-xs text-muted-foreground">
+              {useCustomParticipants
+                ? (maxParticipants === 0 ? 'No limit on participants' : `Maximum ${maxParticipants} participants can join`)
+                : 'Default allows up to 10 participants'
+              }
+            </p>
+          </div>
+
+          {/* Evaluation Criteria Field */}
+          <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm md:text-base font-medium">
+                Evaluation Criteria
+              </Label>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">
+                  {useCustomCriteria ? 'Custom' : 'Default'}
+                </span>
+                <Switch
+                  checked={useCustomCriteria}
+                  onCheckedChange={(checked) => {
+                    setUseCustomCriteria(checked);
+                    if (!checked) {
+                      setCriteria({ ...DEFAULT_EVALUATION_CRITERIA });
+                    }
+                  }}
+                  disabled={isSubmitting}
+                />
+              </div>
+            </div>
+
+            {useCustomCriteria ? (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Logic & Reasoning</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={criteria.logic_reasoning}
+                      onChange={(e) => setCriteria(prev => ({ ...prev, logic_reasoning: Number(e.target.value) || 0 }))}
+                      disabled={isSubmitting}
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Evidence & Facts</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={criteria.evidence_facts}
+                      onChange={(e) => setCriteria(prev => ({ ...prev, evidence_facts: Number(e.target.value) || 0 }))}
+                      disabled={isSubmitting}
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Clarity</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={criteria.clarity}
+                      onChange={(e) => setCriteria(prev => ({ ...prev, clarity: Number(e.target.value) || 0 }))}
+                      disabled={isSubmitting}
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Relevance</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={criteria.relevance}
+                      onChange={(e) => setCriteria(prev => ({ ...prev, relevance: Number(e.target.value) || 0 }))}
+                      disabled={isSubmitting}
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Originality</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={criteria.originality}
+                      onChange={(e) => setCriteria(prev => ({ ...prev, originality: Number(e.target.value) || 0 }))}
+                      disabled={isSubmitting}
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">Persuasiveness</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={criteria.persuasiveness}
+                      onChange={(e) => setCriteria(prev => ({ ...prev, persuasiveness: Number(e.target.value) || 0 }))}
+                      disabled={isSubmitting}
+                      className="text-sm"
+                    />
+                  </div>
+                </div>
+
+                {/* Total Counter */}
+                {(() => {
+                  const total = criteria.logic_reasoning + criteria.evidence_facts + criteria.clarity +
+                    criteria.relevance + criteria.originality + criteria.persuasiveness;
+                  const isValid = total === 100;
+                  return (
+                    <div className={`flex items-center justify-between p-2 rounded ${isValid ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
+                      <span className="text-sm font-medium">Total:</span>
+                      <span className={`text-sm font-bold ${isValid ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                        {total}/100 {isValid ? '✓' : `(${total < 100 ? 'Need ' + (100 - total) + ' more' : 'Reduce by ' + (total - 100)})`}
+                      </span>
+                    </div>
+                  );
+                })()}
+              </div>
+            ) : (
+              <div className="text-xs text-muted-foreground space-y-1">
+                <p>Default weights:</p>
+                <p>Logic: 25, Evidence: 20, Clarity: 15, Relevance: 15, Originality: 15, Persuasiveness: 10</p>
+              </div>
+            )}
+          </div>
+
           {/* General Error Message */}
           {generalError && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-md">
@@ -416,7 +603,7 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
               Please log in to create a debate
             </p>
           )}
-          
+
           {/* Wallet Loading Warning */}
           {authenticated && !signerReady && (
             <p className="text-xs md:text-sm text-amber-600 text-center">

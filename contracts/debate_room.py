@@ -145,7 +145,23 @@ class DebateRoom(gl.Contract):
     pending_evaluations: TreeMap[str, PendingEvaluation]  # Map of participant address (str) to evaluation
 
     
-    def __init__(self, topic: str, description: str, duration_minutes: int):
+    # Evaluation criteria weights (must sum to 100)
+    weight_logic_reasoning: u8
+    weight_evidence_facts: u8
+    weight_clarity: u8
+    weight_relevance: u8
+    weight_originality: u8
+    weight_persuasiveness: u8
+
+    
+    def __init__(self, topic: str, description: str, duration_minutes: int, 
+                 max_participants: int = 10,
+                 weight_logic_reasoning: int = 25,
+                 weight_evidence_facts: int = 20,
+                 weight_clarity: int = 15,
+                 weight_relevance: int = 15,
+                 weight_originality: int = 15,
+                 weight_persuasiveness: int = 10):
         """
         Initialize a new debate room.
         
@@ -153,6 +169,8 @@ class DebateRoom(gl.Contract):
             topic: Debate title (1-200 characters)
             description: Detailed explanation (1-1000 characters)
             duration_minutes: Debate duration in minutes (must be positive integer)
+            max_participants: Maximum participants (0 = unlimited, default: 10)
+            weight_*: Evaluation criteria weights (must sum to 100)
         
         Raises:
             Exception: If validation fails
@@ -167,6 +185,11 @@ class DebateRoom(gl.Contract):
         if duration_minutes <= 0:
             raise Exception("Duration must be a positive number")
         
+        # Validate criteria weights sum to 100
+        total_weight = weight_logic_reasoning + weight_evidence_facts + weight_clarity + weight_relevance + weight_originality + weight_persuasiveness
+        if total_weight != 100:
+            raise Exception(f"Evaluation criteria weights must sum to 100, got {total_weight}")
+        
         # Initialize metadata (timestamps will be set when first participant joins)
         self.topic = topic
         self.description = description
@@ -176,7 +199,15 @@ class DebateRoom(gl.Contract):
         self.end_time = u64(0)  # Will be calculated on first participant
         self.status = "OPEN"
         self.participant_count = u64(0)
-        self.max_participants = u64(10)  # Maximum 10 participants
+        self.max_participants = u64(max_participants)  # 0 = unlimited
+        
+        # Store evaluation criteria weights
+        self.weight_logic_reasoning = u8(weight_logic_reasoning)
+        self.weight_evidence_facts = u8(weight_evidence_facts)
+        self.weight_clarity = u8(weight_clarity)
+        self.weight_relevance = u8(weight_relevance)
+        self.weight_originality = u8(weight_originality)
+        self.weight_persuasiveness = u8(weight_persuasiveness)
         
         # Note: TreeMap and DynArray are auto-initialized by GenLayer
         # No need to call TreeMap() or DynArray() - they're already initialized from type annotations
@@ -205,8 +236,8 @@ class DebateRoom(gl.Contract):
         if sender in self.participants:
             raise Exception("You have already submitted an argument to this debate")
         
-        # Check if debate is full
-        if self.participant_count >= self.max_participants:
+        # Check if debate is full (skip if unlimited - max_participants == 0)
+        if self.max_participants > u64(0) and self.participant_count >= self.max_participants:
             raise Exception(f"This debate is full. Maximum {int(self.max_participants)} participants allowed")
         
         # Validate argument length
@@ -267,7 +298,7 @@ class DebateRoom(gl.Contract):
         Returns:
             Dictionary with scores and reasoning
         """
-        # Create AI evaluation prompt for single argument
+        # Create AI evaluation prompt for single argument with dynamic weights
         task = f"""
 SYSTEM:
 You are an Argument Evaluator. Evaluate this single argument based on the debate topic.
@@ -275,23 +306,23 @@ Your evaluation must be objective and based solely on the quality of the argumen
 IMPORTANT: You MUST respond in ENGLISH regardless of the language of the argument, topic, or description.
 
 CRITERIA (assign points for each):
-- Logic & Reasoning: 0-25 points - Is the argument logically sound and well-structured?
-- Evidence & Facts: 0-20 points - Does it provide credible evidence, data, or examples?
-- Clarity: 0-15 points - Is it clear, well-written, and easy to understand?
-- Relevance: 0-15 points - Is it directly relevant to the debate topic?
-- Originality: 0-15 points - Does it offer unique perspectives or creative insights?
-- Persuasiveness: 0-10 points - How convincing and compelling is the argument?
+- Logic & Reasoning: 0-{int(self.weight_logic_reasoning)} points - Is the argument logically sound and well-structured?
+- Evidence & Facts: 0-{int(self.weight_evidence_facts)} points - Does it provide credible evidence, data, or examples?
+- Clarity: 0-{int(self.weight_clarity)} points - Is it clear, well-written, and easy to understand?
+- Relevance: 0-{int(self.weight_relevance)} points - Is it directly relevant to the debate topic?
+- Originality: 0-{int(self.weight_originality)} points - Does it offer unique perspectives or creative insights?
+- Persuasiveness: 0-{int(self.weight_persuasiveness)} points - How convincing and compelling is the argument?
 
 Total possible: 100 points
 
 Respond ONLY with valid JSON in this exact format:
 {{
-    "logic_reasoning": <0-25>,
-    "evidence_facts": <0-20>,
-    "clarity": <0-15>,
-    "relevance": <0-15>,
-    "originality": <0-15>,
-    "persuasiveness": <0-10>,
+    "logic_reasoning": <0-{int(self.weight_logic_reasoning)}>,
+    "evidence_facts": <0-{int(self.weight_evidence_facts)}>,
+    "clarity": <0-{int(self.weight_clarity)}>,
+    "relevance": <0-{int(self.weight_relevance)}>,
+    "originality": <0-{int(self.weight_originality)}>,
+    "persuasiveness": <0-{int(self.weight_persuasiveness)}>,
     "reasoning": "<Brief 1-2 sentence evaluation explaining the scores>"
 }}
 
@@ -418,6 +449,25 @@ EVALUATE:
             "originality": int(evaluation.originality),
             "persuasiveness": int(evaluation.persuasiveness),
             "reasoning": evaluation.reasoning
+        }
+
+    
+    @gl.public.view
+    def get_evaluation_criteria(self) -> dict:
+        """
+        Get the evaluation criteria weights for this debate.
+        
+        Returns:
+            Dictionary with max_participants and all criteria weights
+        """
+        return {
+            "max_participants": int(self.max_participants),
+            "logic_reasoning": int(self.weight_logic_reasoning),
+            "evidence_facts": int(self.weight_evidence_facts),
+            "clarity": int(self.weight_clarity),
+            "relevance": int(self.weight_relevance),
+            "originality": int(self.weight_originality),
+            "persuasiveness": int(self.weight_persuasiveness),
         }
 
     

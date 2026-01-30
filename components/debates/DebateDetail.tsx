@@ -171,7 +171,7 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
     enabled: !!debateInfo,
   });
 
-  // Fetch results with hybrid approach (database cache + blockchain fallback)
+  // Fetch leaderboard results from database (blockchain is not updated during reveal)
   const { data: results, isLoading: isLoadingResults } = useQuery<{
     winner: string;
     winner_score: number;
@@ -191,33 +191,17 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
   } | null>({
     queryKey: ['results', contractAddress],
     queryFn: async () => {
-      // Try database first (fast)
-      try {
-        const dbResults = await supabaseApi.getLeaderboardByContractAddress(contractAddress);
-        if (dbResults) {
-          console.log('✅ Leaderboard from database (fast)');
-          return dbResults;
-        }
-      } catch (error) {
-        console.warn('Database fetch failed, falling back to blockchain:', error);
+      // Fetch from database (leaderboard_results table)
+      const dbResults = await supabaseApi.getLeaderboardByContractAddress(contractAddress);
+      if (dbResults) {
+        console.log('✅ Leaderboard from database');
+        return dbResults;
       }
-
-      // Fallback to blockchain (slow but accurate)
-      console.log('📡 Fetching leaderboard from blockchain...');
-      const blockchainResults = await getResults(contractAddress);
-      console.log('✅ Leaderboard from blockchain');
-
-      // Sync to database for next time (non-blocking)
-      if (blockchainResults && blockchainResults.all_scores.length > 0) {
-        import('@/lib/sync-service').then(({ syncLeaderboardToDatabase }) => {
-          syncLeaderboardToDatabase(contractAddress, blockchainResults).catch(console.error);
-        });
-      }
-
-      return blockchainResults;
+      console.log('⚠️ No leaderboard data found in database');
+      return null;
     },
-    // Enable if EITHER blockchain OR database says RESOLVED
-    enabled: !!debateInfo && (debateInfo.status === 'RESOLVED' || supabaseDebate?.status === 'RESOLVED'),
+    // Enable when supabase shows RESOLVED (blockchain may not be updated)
+    enabled: supabaseDebate?.status === 'RESOLVED',
   });
 
   // Check if current user has joined - use both blockchain and database

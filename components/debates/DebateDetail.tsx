@@ -424,7 +424,8 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
         end_time: debateInfo.end_time > 0
           ? debateInfo.end_time
           : new Date(supabaseDebate.end_time).getTime() / 1000,
-        status: debateInfo.status,
+        // Prefer database status if it's RESOLVED (cron job updates database, not blockchain)
+        status: supabaseDebate.status === 'RESOLVED' ? 'RESOLVED' : debateInfo.status,
         participant_count: debateInfo.participant_count,
         max_participants: debateInfo.max_participants,
       };

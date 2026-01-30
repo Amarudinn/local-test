@@ -215,8 +215,7 @@ async function evaluateSingleArgument(contractAddress, participantAddress, argum
         throw new Error('GenLayer server client not initialized (missing GENLAYER_PRIVATE_KEY)');
     }
 
-    // Initialize consensus
-    await genlayerServerClient.initializeConsensusSmartContract?.();
+    // Note: initializeConsensusSmartContract is only needed for simulator, skip for production
 
     // Call writeContract to trigger AI evaluation
     const txHash = await genlayerServerClient.writeContract({

@@ -1,4 +1,4 @@
-# v0.1.0
+# v0.2.0
 # { "Depends": "py-genlayer:latest" }
 
 from genlayer import *
@@ -15,7 +15,7 @@ def parse_llm_json_response(result: str, expected_key: str) -> any:
         expected_key: The key to extract from the JSON response
     
     Returns:
-        The value associated with the expected_key
+        The value associated with the expected_key, or full dict if key is None
     
     Raises:
         Exception: If JSON parsing and regex extraction both fail
@@ -34,6 +34,8 @@ def parse_llm_json_response(result: str, expected_key: str) -> any:
     
     try:
         json_result = json.loads(cleaned_result)
+        if expected_key is None:
+            return json_result
         value = json_result[expected_key]
         print(f'LLM calculated {expected_key}: {value}')
         return value
@@ -42,14 +44,14 @@ def parse_llm_json_response(result: str, expected_key: str) -> any:
         print(f"Raw result: {result}")
         print(f"Cleaned result: {cleaned_result}")
         # Fallback: try to extract just the value using regex
-        pattern = rf'"{expected_key}"\s*:\s*"([^"]+)"'
-        match = re.search(pattern, cleaned_result)
-        if match:
-            value = match.group(1)
-            print(f'Extracted {expected_key} from regex: {value}')
-            return value
-        else:
-            raise Exception(f"Could not parse JSON response for key '{expected_key}': {result}")
+        if expected_key:
+            pattern = rf'"{expected_key}"\s*:\s*"([^"]+)"'
+            match = re.search(pattern, cleaned_result)
+            if match:
+                value = match.group(1)
+                print(f'Extracted {expected_key} from regex: {value}')
+                return value
+        raise Exception(f"Could not parse JSON response: {result}")
 
 @allow_storage
 @dataclass
@@ -70,12 +72,13 @@ class Argument:
 @allow_storage
 @dataclass
 class ScoreBreakdown:
-    """Detailed breakdown of scores for each evaluation criterion"""
-    logic_reasoning: u8      # 0-30 points (30% weight)
-    evidence_facts: u8       # 0-25 points (25% weight)
+    """Detailed breakdown of scores for each evaluation criterion (6 criteria)"""
+    logic_reasoning: u8      # 0-25 points (25% weight)
+    evidence_facts: u8       # 0-20 points (20% weight)
     clarity: u8              # 0-15 points (15% weight)
-    rebuttal_quality: u8     # 0-20 points (20% weight)
-    relevance: u8            # 0-10 points (10% weight)
+    relevance: u8            # 0-15 points (15% weight)
+    originality: u8          # 0-15 points (15% weight)
+    persuasiveness: u8       # 0-10 points (10% weight)
 
 @allow_storage
 @dataclass
@@ -86,15 +89,35 @@ class ParticipantScore:
     reasoning: str
     breakdown: ScoreBreakdown  # Detailed score breakdown
 
+@allow_storage
+@dataclass
+class PendingEvaluation:
+    """Stores individual evaluation result before final reveal"""
+    participant_address: str
+    total_score: u8
+    logic_reasoning: u8
+    evidence_facts: u8
+    clarity: u8
+    relevance: u8
+    originality: u8
+    persuasiveness: u8
+    reasoning: str
+    evaluated: bool  # Flag to check if evaluation exists
+
 # Contract class
 class DebateRoom(gl.Contract):
     """
     DebateRoom smart contract for decentralized debates with AI judging.
     
+    V0.2.0 Changes:
+    - New 6-criteria scoring system (removed rebuttal_quality, added originality + persuasiveness)
+    - Added evaluate_single_argument for real-time individual evaluation
+    - Scores: Logic (25%), Evidence (20%), Clarity (15%), Relevance (15%), Originality (15%), Persuasiveness (10%)
+    
     Each debate is an independent contract instance where users can:
     1. Join the debate and submit one argument
     2. Wait for the debate to end
-    3. Resolve the debate using AI judging
+    3. Arguments are evaluated individually by AI in real-time
     4. View the leaderboard with scores and reasoning
     """
     
@@ -117,6 +140,9 @@ class DebateRoom(gl.Contract):
     winner: Address                               # Winner address (after resolution)
     winner_score: u8                              # Winner's score 0-100
     all_scores: TreeMap[Address, ParticipantScore] # All participant scores
+    
+    # Pending evaluations (for real-time individual evaluation)
+    pending_evaluations: TreeMap[str, PendingEvaluation]  # Map of participant address (str) to evaluation
 
     
     def __init__(self, topic: str, description: str, duration_minutes: int):
@@ -229,86 +255,55 @@ class DebateRoom(gl.Contract):
 
     
     @gl.public.write
-    def resolve_debate(self, current_timestamp: int):
+    def evaluate_single_argument(self, participant_address: str, argument_content: str) -> dict:
         """
-        Resolve the debate using AI judging to evaluate all arguments.
+        Evaluate a single argument using AI judging.
+        Called by backend queue processor for real-time evaluation.
         
         Args:
-            current_timestamp: Current Unix timestamp in seconds (from frontend)
+            participant_address: The address of the participant who submitted the argument
+            argument_content: The content of the argument to evaluate
         
-        Raises:
-            Exception: If debate hasn't ended or is already resolved
+        Returns:
+            Dictionary with scores and reasoning
         """
-        # Validate debate has ended
-        current_time_u64 = u64(current_timestamp)
-        if current_time_u64 < self.end_time:
-            raise Exception(f"This debate has not ended yet. Please wait until the end time")
-        
-        # Validate debate not already resolved
-        if self.status == "RESOLVED":
-            raise Exception("This debate has already been resolved")
-        
-        # Validate at least one participant exists
-        if len(self.arguments) == 0:
-            raise Exception("Cannot resolve debate with no participants")
-        
-        # Prepare arguments for AI evaluation
-        arguments_list = []
-        for arg in self.arguments:
-            arguments_list.append({
-                "address": arg.author.as_hex,
-                "content": arg.content
-            })
-        
-        arguments_json = json.dumps(arguments_list)
-        
-        # Create AI judging prompt
+        # Create AI evaluation prompt for single argument
         task = f"""
 SYSTEM:
-You are the Debate Judge. You will evaluate arguments in a debate based on specific criteria.
+You are an Argument Evaluator. Evaluate this single argument based on the debate topic.
+Your evaluation must be objective and based solely on the quality of the argument.
 
-Your task:
-1. Evaluate each argument based on these weighted criteria:
-   - Logic & Reasoning: 30% (0-30 points) - Is the argument logically sound and well-reasoned?
-   - Evidence & Facts: 25% (0-25 points) - Does it provide credible evidence and facts?
-   - Clarity: 15% (0-15 points) - Is it clear and easy to understand?
-   - Rebuttal Quality: 20% (0-20 points) - Does it address counterarguments effectively?
-   - Relevance: 10% (0-10 points) - Is it relevant to the debate topic?
+CRITERIA (assign points for each):
+- Logic & Reasoning: 0-25 points - Is the argument logically sound and well-structured?
+- Evidence & Facts: 0-20 points - Does it provide credible evidence, data, or examples?
+- Clarity: 0-15 points - Is it clear, well-written, and easy to understand?
+- Relevance: 0-15 points - Is it directly relevant to the debate topic?
+- Originality: 0-15 points - Does it offer unique perspectives or creative insights?
+- Persuasiveness: 0-10 points - How convincing and compelling is the argument?
 
-2. Assign points for each criterion based on the percentages above.
-   The total score will be the sum of all criteria (0-100).
+Total possible: 100 points
 
-3. Provide brief reasoning (max 200 chars) explaining the overall evaluation.
-
-4. Respond in JSON format with an array of participants:
+Respond ONLY with valid JSON in this exact format:
 {{
-    "participants": [
-        {{
-            "address": "0x...",
-            "logic_reasoning": 25,
-            "evidence_facts": 20,
-            "clarity": 12,
-            "rebuttal_quality": 15,
-            "relevance": 8,
-            "reasoning": "Strong logical argument with good evidence..."
-        }}
-    ]
+    "logic_reasoning": <0-25>,
+    "evidence_facts": <0-20>,
+    "clarity": <0-15>,
+    "relevance": <0-15>,
+    "originality": <0-15>,
+    "persuasiveness": <0-10>,
+    "reasoning": "<Brief 1-2 sentence evaluation explaining the scores>"
 }}
 
-It is mandatory that you respond only using the JSON format above.
-Your output must be valid JSON without any formatting prefix or suffix.
+DEBATE TOPIC: {self.topic}
+DEBATE DESCRIPTION: {self.description}
+ARGUMENT TO EVALUATE: {argument_content}
 
-INPUT:
-Topic: {self.topic}
-Description: {self.description}
-Arguments: {arguments_json}
-
-JUDGE:
+EVALUATE:
 """
         
         def leader_fn():
             result = gl.nondet.exec_prompt(task)
-            parsed = parse_llm_json_response(result, "participants")
+            parsed = parse_llm_json_response(result, None)  # Get full dict
             return parsed
         
         def validator_fn(leader_result: gl.vm.Result) -> bool:
@@ -318,65 +313,161 @@ JUDGE:
             
             leader_data = leader_result.calldata
             
-            # Both should have same number of participants
-            if len(leader_data) != len(validator_result):
-                return False
+            # Calculate total scores
+            leader_total = (
+                int(leader_data["logic_reasoning"]) +
+                int(leader_data["evidence_facts"]) +
+                int(leader_data["clarity"]) +
+                int(leader_data["relevance"]) +
+                int(leader_data["originality"]) +
+                int(leader_data["persuasiveness"])
+            )
+            validator_total = (
+                int(validator_result["logic_reasoning"]) +
+                int(validator_result["evidence_facts"]) +
+                int(validator_result["clarity"]) +
+                int(validator_result["relevance"]) +
+                int(validator_result["originality"]) +
+                int(validator_result["persuasiveness"])
+            )
             
-            # Check that scores are within reasonable range (allow 15 point difference)
-            # Calculate total score from breakdown since AI doesn't return "score" field
-            for i in range(len(leader_data)):
-                leader_total = (
-                    int(leader_data[i]["logic_reasoning"]) +
-                    int(leader_data[i]["evidence_facts"]) +
-                    int(leader_data[i]["clarity"]) +
-                    int(leader_data[i]["rebuttal_quality"]) +
-                    int(leader_data[i]["relevance"])
-                )
-                validator_total = (
-                    int(validator_result[i]["logic_reasoning"]) +
-                    int(validator_result[i]["evidence_facts"]) +
-                    int(validator_result[i]["clarity"]) +
-                    int(validator_result[i]["rebuttal_quality"]) +
-                    int(validator_result[i]["relevance"])
-                )
-                if abs(leader_total - validator_total) > 15:
-                    return False
+            # Allow 15 point difference for consensus
+            if abs(leader_total - validator_total) > 15:
+                return False
             
             return True
         
         result = gl.vm.run_nondet(leader_fn, validator_fn)
         
-        print("AI Judging Result:", result)
+        print(f"AI Evaluation Result for {participant_address}:", result)
         
-        # Process results and store scores
+        # Calculate total score
+        total_score = (
+            int(result["logic_reasoning"]) +
+            int(result["evidence_facts"]) +
+            int(result["clarity"]) +
+            int(result["relevance"]) +
+            int(result["originality"]) +
+            int(result["persuasiveness"])
+        )
+        
+        # Create and store the evaluation in storage
+        evaluation = PendingEvaluation(
+            participant_address=participant_address,
+            total_score=u8(total_score),
+            logic_reasoning=u8(int(result["logic_reasoning"])),
+            evidence_facts=u8(int(result["evidence_facts"])),
+            clarity=u8(int(result["clarity"])),
+            relevance=u8(int(result["relevance"])),
+            originality=u8(int(result["originality"])),
+            persuasiveness=u8(int(result["persuasiveness"])),
+            reasoning=result["reasoning"],
+            evaluated=True
+        )
+        
+        # Store in pending_evaluations TreeMap
+        self.pending_evaluations[participant_address] = evaluation
+        
+        print(f"Stored evaluation for {participant_address}: score={total_score}")
+        
+        # Return success indicator (actual data retrieved via get_pending_evaluation)
+        return {
+            "success": True,
+            "participant_address": participant_address
+        }
+
+    
+    @gl.public.view
+    def get_pending_evaluation(self, participant_address: str) -> dict:
+        """
+        Get the pending evaluation for a specific participant.
+        This is a view function that can be called with readContract.
+        
+        Args:
+            participant_address: The address of the participant
+        
+        Returns:
+            Dictionary with evaluation scores or empty dict if not found
+        """
+        # Check if evaluation exists for this participant
+        if participant_address not in self.pending_evaluations:
+            return {
+                "found": False,
+                "participant_address": participant_address,
+                "total_score": 0,
+                "logic_reasoning": 0,
+                "evidence_facts": 0,
+                "clarity": 0,
+                "relevance": 0,
+                "originality": 0,
+                "persuasiveness": 0,
+                "reasoning": ""
+            }
+        
+        evaluation = self.pending_evaluations[participant_address]
+        
+        return {
+            "found": True,
+            "participant_address": evaluation.participant_address,
+            "total_score": int(evaluation.total_score),
+            "logic_reasoning": int(evaluation.logic_reasoning),
+            "evidence_facts": int(evaluation.evidence_facts),
+            "clarity": int(evaluation.clarity),
+            "relevance": int(evaluation.relevance),
+            "originality": int(evaluation.originality),
+            "persuasiveness": int(evaluation.persuasiveness),
+            "reasoning": evaluation.reasoning
+        }
+
+    
+    @gl.public.write
+    def finalize_results(self, evaluations: list, current_timestamp: int):
+        """
+        Finalize debate results from pre-computed evaluations.
+        Called by backend after all evaluations are complete and debate has ended.
+        
+        Args:
+            evaluations: List of evaluation dictionaries with scores
+            current_timestamp: Current Unix timestamp in seconds
+        """
+        # Validate debate has ended
+        current_time_u64 = u64(current_timestamp)
+        if current_time_u64 < self.end_time:
+            raise Exception("Debate has not ended yet")
+        
+        # Validate not already resolved
+        if self.status == "RESOLVED":
+            raise Exception("Debate has already been resolved")
+        
+        # Process each evaluation and store scores
         winner_address = None
         winner_score_value = 0
         
-        for participant_result in result:
-            addr = Address(participant_result["address"])
+        for eval_data in evaluations:
+            addr = Address(eval_data["participant_address"])
             
-            # Extract breakdown scores
-            logic = u8(int(participant_result["logic_reasoning"]))
-            evidence = u8(int(participant_result["evidence_facts"]))
-            clarity = u8(int(participant_result["clarity"]))
-            rebuttal = u8(int(participant_result["rebuttal_quality"]))
-            relevance = u8(int(participant_result["relevance"]))
+            # Extract scores
+            logic = u8(int(eval_data["logic_reasoning"]))
+            evidence = u8(int(eval_data["evidence_facts"]))
+            clarity = u8(int(eval_data["clarity"]))
+            relevance = u8(int(eval_data["relevance"]))
+            originality = u8(int(eval_data["originality"]))
+            persuasiveness = u8(int(eval_data["persuasiveness"]))
             
-            # Calculate total score (sum of all criteria)
-            total_score = u8(logic + evidence + clarity + rebuttal + relevance)
-            
-            reasoning = participant_result["reasoning"]
+            total_score = u8(int(eval_data["total_score"]))
+            reasoning = eval_data["reasoning"]
             
             # Create breakdown object
             breakdown = ScoreBreakdown(
                 logic_reasoning=logic,
                 evidence_facts=evidence,
                 clarity=clarity,
-                rebuttal_quality=rebuttal,
-                relevance=relevance
+                relevance=relevance,
+                originality=originality,
+                persuasiveness=persuasiveness
             )
             
-            # Store score with breakdown
+            # Store score
             participant_score = ParticipantScore(
                 address=addr,
                 score=total_score,
@@ -478,8 +569,9 @@ JUDGE:
                     "logic_reasoning": int(score_data.breakdown.logic_reasoning),
                     "evidence_facts": int(score_data.breakdown.evidence_facts),
                     "clarity": int(score_data.breakdown.clarity),
-                    "rebuttal_quality": int(score_data.breakdown.rebuttal_quality),
-                    "relevance": int(score_data.breakdown.relevance)
+                    "relevance": int(score_data.breakdown.relevance),
+                    "originality": int(score_data.breakdown.originality),
+                    "persuasiveness": int(score_data.breakdown.persuasiveness)
                 }
             })
         

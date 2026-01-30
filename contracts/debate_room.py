@@ -272,6 +272,7 @@ class DebateRoom(gl.Contract):
 SYSTEM:
 You are an Argument Evaluator. Evaluate this single argument based on the debate topic.
 Your evaluation must be objective and based solely on the quality of the argument.
+IMPORTANT: You MUST respond in ENGLISH regardless of the language of the argument, topic, or description.
 
 CRITERIA (assign points for each):
 - Logic & Reasoning: 0-25 points - Is the argument logically sound and well-structured?

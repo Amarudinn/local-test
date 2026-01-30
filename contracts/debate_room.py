@@ -89,6 +89,21 @@ class ParticipantScore:
     reasoning: str
     breakdown: ScoreBreakdown  # Detailed score breakdown
 
+@allow_storage
+@dataclass
+class PendingEvaluation:
+    """Stores individual evaluation result before final reveal"""
+    participant_address: str
+    total_score: u8
+    logic_reasoning: u8
+    evidence_facts: u8
+    clarity: u8
+    relevance: u8
+    originality: u8
+    persuasiveness: u8
+    reasoning: str
+    evaluated: bool  # Flag to check if evaluation exists
+
 # Contract class
 class DebateRoom(gl.Contract):
     """
@@ -125,6 +140,9 @@ class DebateRoom(gl.Contract):
     winner: Address                               # Winner address (after resolution)
     winner_score: u8                              # Winner's score 0-100
     all_scores: TreeMap[Address, ParticipantScore] # All participant scores
+    
+    # Pending evaluations (for real-time individual evaluation)
+    pending_evaluations: TreeMap[str, PendingEvaluation]  # Map of participant address (str) to evaluation
 
     
     def __init__(self, topic: str, description: str, duration_minutes: int):
@@ -333,17 +351,72 @@ EVALUATE:
             int(result["persuasiveness"])
         )
         
-        # Return evaluation result
+        # Create and store the evaluation in storage
+        evaluation = PendingEvaluation(
+            participant_address=participant_address,
+            total_score=u8(total_score),
+            logic_reasoning=u8(int(result["logic_reasoning"])),
+            evidence_facts=u8(int(result["evidence_facts"])),
+            clarity=u8(int(result["clarity"])),
+            relevance=u8(int(result["relevance"])),
+            originality=u8(int(result["originality"])),
+            persuasiveness=u8(int(result["persuasiveness"])),
+            reasoning=result["reasoning"],
+            evaluated=True
+        )
+        
+        # Store in pending_evaluations TreeMap
+        self.pending_evaluations[participant_address] = evaluation
+        
+        print(f"Stored evaluation for {participant_address}: score={total_score}")
+        
+        # Return success indicator (actual data retrieved via get_pending_evaluation)
         return {
-            "participant_address": participant_address,
-            "total_score": total_score,
-            "logic_reasoning": int(result["logic_reasoning"]),
-            "evidence_facts": int(result["evidence_facts"]),
-            "clarity": int(result["clarity"]),
-            "relevance": int(result["relevance"]),
-            "originality": int(result["originality"]),
-            "persuasiveness": int(result["persuasiveness"]),
-            "reasoning": result["reasoning"]
+            "success": True,
+            "participant_address": participant_address
+        }
+
+    
+    @gl.public.view
+    def get_pending_evaluation(self, participant_address: str) -> dict:
+        """
+        Get the pending evaluation for a specific participant.
+        This is a view function that can be called with readContract.
+        
+        Args:
+            participant_address: The address of the participant
+        
+        Returns:
+            Dictionary with evaluation scores or empty dict if not found
+        """
+        # Check if evaluation exists for this participant
+        if participant_address not in self.pending_evaluations:
+            return {
+                "found": False,
+                "participant_address": participant_address,
+                "total_score": 0,
+                "logic_reasoning": 0,
+                "evidence_facts": 0,
+                "clarity": 0,
+                "relevance": 0,
+                "originality": 0,
+                "persuasiveness": 0,
+                "reasoning": ""
+            }
+        
+        evaluation = self.pending_evaluations[participant_address]
+        
+        return {
+            "found": True,
+            "participant_address": evaluation.participant_address,
+            "total_score": int(evaluation.total_score),
+            "logic_reasoning": int(evaluation.logic_reasoning),
+            "evidence_facts": int(evaluation.evidence_facts),
+            "clarity": int(evaluation.clarity),
+            "relevance": int(evaluation.relevance),
+            "originality": int(evaluation.originality),
+            "persuasiveness": int(evaluation.persuasiveness),
+            "reasoning": evaluation.reasoning
         }
 
     

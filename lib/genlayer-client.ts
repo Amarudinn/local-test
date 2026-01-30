@@ -696,92 +696,104 @@ export async function evaluateSingleArgument(
     // Ensure consensus smart contract is initialized
     await client.initializeConsensusSmartContract?.();
 
-    const result = await client.writeContract({
+    logger.info(LogCategory.BLOCKCHAIN, "Calling evaluate_single_argument on smart contract", {
+      contractAddress,
+      metadata: { participantAddress }
+    });
+
+    // Step 1: Call writeContract to trigger evaluation (AI runs here)
+    const txHash = await client.writeContract({
       address: contractAddress as `0x${string}`,
       functionName: "evaluate_single_argument",
       args: [participantAddress, argumentContent],
       value: BigInt(0),
     });
 
-    // Wait for transaction to be confirmed
+    logger.info(LogCategory.BLOCKCHAIN, "WriteContract submitted", {
+      contractAddress,
+      metadata: { txHash: String(txHash) }
+    });
+
+    // Step 2: Wait for transaction to be confirmed
     const receipt = await client.waitForTransactionReceipt?.({
-      hash: result as any,
+      hash: txHash as any,
       status: 'ACCEPTED' as any,
       retries: 50,
       interval: 5000,
     });
 
-    // Parse the result from the receipt
-    // GenLayer returns the evaluation result in the receipt data
+    logger.info(LogCategory.BLOCKCHAIN, "Transaction confirmed", {
+      contractAddress,
+      metadata: { status: receipt?.status, txHash: String(txHash) }
+    });
+
+    // Step 3: Call readContract to get the stored evaluation
+    // The evaluation was stored in pending_evaluations by the smart contract
+    logger.info(LogCategory.BLOCKCHAIN, "Reading stored evaluation via get_pending_evaluation", {
+      contractAddress,
+      metadata: { participantAddress }
+    });
+
+    const storedEvaluation = await defaultClient.readContract({
+      address: contractAddress as `0x${string}`,
+      functionName: "get_pending_evaluation",
+      args: [participantAddress],
+    });
+
+    logger.info(LogCategory.BLOCKCHAIN, "Got stored evaluation", {
+      contractAddress,
+      metadata: {
+        resultType: typeof storedEvaluation,
+        isMap: storedEvaluation instanceof Map,
+        resultStr: JSON.stringify(storedEvaluation instanceof Map ? Object.fromEntries(storedEvaluation) : storedEvaluation).substring(0, 500)
+      }
+    });
+
+    // Step 4: Parse the evaluation data
     let evaluationData: any;
 
-    // Debug: Log raw receipt and result
-    logger.info(LogCategory.BLOCKCHAIN, "Raw GenLayer response", {
-      metadata: {
-        receiptType: typeof receipt,
-        resultType: typeof result,
-        hasReceipt: !!receipt,
-        receiptData: receipt?.data ? JSON.stringify(receipt.data).substring(0, 500) : 'no data',
-        resultStr: result ? JSON.stringify(result).substring(0, 500) : 'no result'
-      }
-    });
-
-    if (receipt?.data?.result) {
-      evaluationData = receipt.data.result;
-    } else if (receipt?.result) {
-      evaluationData = receipt.result;
-    } else if (result instanceof Map) {
-      evaluationData = Object.fromEntries(result);
-    } else if (typeof result === 'object' && result !== null) {
-      evaluationData = result;
-    } else {
-      evaluationData = {};
-    }
-
-    // Debug: Log parsed evaluation data
-    logger.info(LogCategory.BLOCKCHAIN, "Parsed evaluation data", {
-      metadata: {
-        dataType: typeof evaluationData,
-        isMap: evaluationData instanceof Map,
-        keys: evaluationData ? Object.keys(evaluationData) : [],
-        dataStr: JSON.stringify(evaluationData).substring(0, 500)
-      }
-    });
-
-    // Convert Map to object if needed
-    if (evaluationData instanceof Map) {
+    if (storedEvaluation instanceof Map) {
       evaluationData = {
-        participant_address: evaluationData.get('participant_address'),
-        total_score: Number(evaluationData.get('total_score')),
-        logic_reasoning: Number(evaluationData.get('logic_reasoning')),
-        evidence_facts: Number(evaluationData.get('evidence_facts')),
-        clarity: Number(evaluationData.get('clarity')),
-        relevance: Number(evaluationData.get('relevance')),
-        originality: Number(evaluationData.get('originality')),
-        persuasiveness: Number(evaluationData.get('persuasiveness')),
-        reasoning: evaluationData.get('reasoning'),
+        found: storedEvaluation.get('found'),
+        participant_address: storedEvaluation.get('participant_address'),
+        total_score: Number(storedEvaluation.get('total_score')),
+        logic_reasoning: Number(storedEvaluation.get('logic_reasoning')),
+        evidence_facts: Number(storedEvaluation.get('evidence_facts')),
+        clarity: Number(storedEvaluation.get('clarity')),
+        relevance: Number(storedEvaluation.get('relevance')),
+        originality: Number(storedEvaluation.get('originality')),
+        persuasiveness: Number(storedEvaluation.get('persuasiveness')),
+        reasoning: storedEvaluation.get('reasoning'),
       };
+    } else if (typeof storedEvaluation === 'object' && storedEvaluation !== null) {
+      evaluationData = storedEvaluation;
+    } else {
+      evaluationData = { found: false };
     }
 
-    // Calculate total score if not provided
+    // Check if evaluation was found
+    if (!evaluationData.found) {
+      logger.warn(LogCategory.BLOCKCHAIN, "Evaluation not found in storage", {
+        contractAddress,
+        metadata: { participantAddress }
+      });
+      throw new Error("Evaluation was processed but not found in storage");
+    }
+
     const logicScore = Number(evaluationData.logic_reasoning) || 0;
     const evidenceScore = Number(evaluationData.evidence_facts) || 0;
     const clarityScore = Number(evaluationData.clarity) || 0;
     const relevanceScore = Number(evaluationData.relevance) || 0;
     const originalityScore = Number(evaluationData.originality) || 0;
     const persuasivenessScore = Number(evaluationData.persuasiveness) || 0;
+    const totalScore = Number(evaluationData.total_score) ||
+      (logicScore + evidenceScore + clarityScore + relevanceScore + originalityScore + persuasivenessScore);
 
-    const calculatedTotal = logicScore + evidenceScore + clarityScore +
-      relevanceScore + originalityScore + persuasivenessScore;
-
-    const totalScore = Number(evaluationData.total_score) || calculatedTotal;
-
-    logger.info(LogCategory.BLOCKCHAIN, "Argument evaluation completed", {
+    logger.info(LogCategory.BLOCKCHAIN, "Argument evaluation completed successfully", {
       contractAddress,
       metadata: {
         participantAddress,
         totalScore,
-        calculatedTotal,
         breakdown: { logicScore, evidenceScore, clarityScore, relevanceScore, originalityScore, persuasivenessScore }
       }
     });

@@ -3,6 +3,7 @@
     "version": "2.0.0",
     "description": "VPS Direct Processor for Ruang Debat - Processes AI evaluations directly",
     "main": "index.js",
+    "type": "module",
     "scripts": {
         "start": "node index.js",
         "dev": "node index.js"

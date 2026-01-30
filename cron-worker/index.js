@@ -9,10 +9,12 @@
  * No timeout limits!
  */
 
-const { createClient } = require('@supabase/supabase-js');
-const { createClient: createGenLayerClient, createAccount } = require('genlayer-js');
-const { studionet } = require('genlayer-js/chains');
-require('dotenv').config();
+import { createClient } from '@supabase/supabase-js';
+import { createClient as createGenLayerClient, createAccount } from 'genlayer-js';
+import { studionet } from 'genlayer-js/chains';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 // ============== Configuration ==============
 const CONFIG = {

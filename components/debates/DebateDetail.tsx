@@ -17,7 +17,8 @@ import {
   getResults,
   hasUserJoined,
   joinDebate as joinDebateBlockchain,
-  resolveDebate as resolveDebateBlockchain
+  resolveDebate as resolveDebateBlockchain,
+  getEvaluationCriteria
 } from '@/lib/genlayer-client';
 import { supabaseApi } from '@/lib/supabase-client';
 import { syncParticipantJoin, syncDebateResolution } from '@/lib/sync-service';
@@ -89,6 +90,13 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
   const { data: supabaseDebate, isLoading: isLoadingSupabase } = useQuery({
     queryKey: ['debate-supabase', contractAddress],
     queryFn: () => supabaseApi.getDebateByAddress(contractAddress),
+  });
+
+  // Fetch evaluation criteria from blockchain
+  const { data: evaluationCriteria } = useQuery({
+    queryKey: ['evaluation-criteria', contractAddress],
+    queryFn: () => getEvaluationCriteria(contractAddress),
+    staleTime: 60 * 60 * 1000, // Cache for 1 hour - criteria rarely changes
   });
 
   // Fetch participants with hybrid approach (database cache + blockchain fallback)
@@ -650,42 +658,42 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
                   <CardContent className="space-y-2">
                     <div className="space-y-2 text-xs md:text-sm">
                       <div className="flex items-start gap-2">
-                        <div className="min-w-[45px] font-bold text-blue-900 dark:text-blue-100">25%</div>
+                        <div className="min-w-[45px] font-bold text-blue-900 dark:text-blue-100">{evaluationCriteria?.logic_reasoning || 25}%</div>
                         <div>
                           <div className="font-semibold text-blue-900 dark:text-blue-100">Logic & Reasoning</div>
                           <div className="text-blue-700 dark:text-blue-300">Is the argument logically sound and well-reasoned?</div>
                         </div>
                       </div>
                       <div className="flex items-start gap-2">
-                        <div className="min-w-[45px] font-bold text-blue-900 dark:text-blue-100">20%</div>
+                        <div className="min-w-[45px] font-bold text-blue-900 dark:text-blue-100">{evaluationCriteria?.evidence_facts || 20}%</div>
                         <div>
                           <div className="font-semibold text-blue-900 dark:text-blue-100">Evidence & Facts</div>
                           <div className="text-blue-700 dark:text-blue-300">Does it provide credible evidence and facts?</div>
                         </div>
                       </div>
                       <div className="flex items-start gap-2">
-                        <div className="min-w-[45px] font-bold text-blue-900 dark:text-blue-100">15%</div>
+                        <div className="min-w-[45px] font-bold text-blue-900 dark:text-blue-100">{evaluationCriteria?.clarity || 15}%</div>
                         <div>
                           <div className="font-semibold text-blue-900 dark:text-blue-100">Clarity</div>
                           <div className="text-blue-700 dark:text-blue-300">Is it clear and easy to understand?</div>
                         </div>
                       </div>
                       <div className="flex items-start gap-2">
-                        <div className="min-w-[45px] font-bold text-blue-900 dark:text-blue-100">15%</div>
+                        <div className="min-w-[45px] font-bold text-blue-900 dark:text-blue-100">{evaluationCriteria?.relevance || 15}%</div>
                         <div>
                           <div className="font-semibold text-blue-900 dark:text-blue-100">Relevance</div>
                           <div className="text-blue-700 dark:text-blue-300">Is it relevant to the debate topic?</div>
                         </div>
                       </div>
                       <div className="flex items-start gap-2">
-                        <div className="min-w-[45px] font-bold text-blue-900 dark:text-blue-100">15%</div>
+                        <div className="min-w-[45px] font-bold text-blue-900 dark:text-blue-100">{evaluationCriteria?.originality || 15}%</div>
                         <div>
                           <div className="font-semibold text-blue-900 dark:text-blue-100">Originality</div>
                           <div className="text-blue-700 dark:text-blue-300">Does it offer unique perspectives or creative insights?</div>
                         </div>
                       </div>
                       <div className="flex items-start gap-2">
-                        <div className="min-w-[45px] font-bold text-blue-900 dark:text-blue-100">10%</div>
+                        <div className="min-w-[45px] font-bold text-blue-900 dark:text-blue-100">{evaluationCriteria?.persuasiveness || 10}%</div>
                         <div>
                           <div className="font-semibold text-blue-900 dark:text-blue-100">Persuasiveness</div>
                           <div className="text-blue-700 dark:text-blue-300">How convincing and compelling is the argument?</div>

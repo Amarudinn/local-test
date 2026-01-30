@@ -722,6 +722,68 @@ export async function isDebateEnded(contractAddress: string): Promise<boolean> {
 }
 
 /**
+ * Get evaluation criteria weights for a debate
+ * 
+ * @param contractAddress - The debate contract address
+ * @returns Evaluation criteria with max_participants and weights
+ */
+export async function getEvaluationCriteria(contractAddress: string): Promise<{
+  max_participants: number;
+  logic_reasoning: number;
+  evidence_facts: number;
+  clarity: number;
+  relevance: number;
+  originality: number;
+  persuasiveness: number;
+}> {
+  logger.debug(LogCategory.BLOCKCHAIN, "Fetching evaluation criteria", { contractAddress });
+
+  try {
+    const result = await defaultClient.readContract({
+      address: contractAddress as `0x${string}`,
+      functionName: "get_evaluation_criteria",
+      args: [],
+    });
+
+    // Handle Map or plain object
+    if (result instanceof Map) {
+      return {
+        max_participants: Number(result.get('max_participants')) || 10,
+        logic_reasoning: Number(result.get('logic_reasoning')) || 25,
+        evidence_facts: Number(result.get('evidence_facts')) || 20,
+        clarity: Number(result.get('clarity')) || 15,
+        relevance: Number(result.get('relevance')) || 15,
+        originality: Number(result.get('originality')) || 15,
+        persuasiveness: Number(result.get('persuasiveness')) || 10,
+      };
+    }
+
+    const data = result as any;
+    return {
+      max_participants: Number(data.max_participants) || 10,
+      logic_reasoning: Number(data.logic_reasoning) || 25,
+      evidence_facts: Number(data.evidence_facts) || 20,
+      clarity: Number(data.clarity) || 15,
+      relevance: Number(data.relevance) || 15,
+      originality: Number(data.originality) || 15,
+      persuasiveness: Number(data.persuasiveness) || 10,
+    };
+  } catch (error) {
+    // Return defaults if contract doesn't have this function (old contracts)
+    console.warn('getEvaluationCriteria failed (using defaults):', error);
+    return {
+      max_participants: 10,
+      logic_reasoning: 25,
+      evidence_facts: 20,
+      clarity: 15,
+      relevance: 15,
+      originality: 15,
+      persuasiveness: 10,
+    };
+  }
+}
+
+/**
  * Evaluation result type for single argument evaluation
  */
 export interface EvaluationResult {

@@ -9,12 +9,17 @@
  * No timeout limits!
  */
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { createClient as createGenLayerClient, createAccount } from 'genlayer-js';
-import { studionet } from 'genlayer-js/chains';
 import dotenv from 'dotenv';
 
 dotenv.config();
+
+// Define studionet chain manually (avoiding subpath export issues)
+const studionet = {
+    id: 'studionet',
+    name: 'GenLayer Studionet',
+};
 
 // ============== Configuration ==============
 const CONFIG = {
@@ -44,7 +49,7 @@ function initClients() {
     if (!CONFIG.SUPABASE_URL || !CONFIG.SUPABASE_KEY) {
         throw new Error('SUPABASE_URL and SUPABASE_KEY are required');
     }
-    supabase = createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+    supabase = createSupabaseClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
 
     // GenLayer (read-only)
     genlayerClient = createGenLayerClient({

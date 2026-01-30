@@ -19,6 +19,11 @@ dotenv.config();
 const studionet = {
     id: 'studionet',
     name: 'GenLayer Studionet',
+    rpcUrls: {
+        default: {
+            http: ['https://studio.genlayer.com/api']
+        }
+    }
 };
 
 // ============== Configuration ==============

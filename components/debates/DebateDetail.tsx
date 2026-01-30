@@ -208,7 +208,8 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
 
       return blockchainResults;
     },
-    enabled: !!debateInfo && debateInfo.status === 'RESOLVED',
+    // Enable if EITHER blockchain OR database says RESOLVED
+    enabled: !!debateInfo && (debateInfo.status === 'RESOLVED' || supabaseDebate?.status === 'RESOLVED'),
   });
 
   // Check if current user has joined - use both blockchain and database

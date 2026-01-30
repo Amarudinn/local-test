@@ -17,6 +17,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { logger, LogCategory } from '@/lib/logger';
 
+// Vercel serverless function config - 5 minute timeout
+export const maxDuration = 300; // 5 minutes in seconds
+export const dynamic = 'force-dynamic';
+
 // Lazy-initialize Supabase client (avoid build-time errors)
 let supabase: SupabaseClient | null = null;
 

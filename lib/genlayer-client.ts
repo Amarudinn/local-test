@@ -18,6 +18,33 @@ let defaultClient = createClient({
   endpoint: resolveEndpoint()
 });
 
+// Helper function to safely stringify objects containing BigInt
+function safeStringify(obj: any, maxLength: number = 500): string {
+  try {
+    const stringified = JSON.stringify(obj, (key, value) =>
+      typeof value === 'bigint' ? value.toString() : value
+    );
+    return stringified.substring(0, maxLength);
+  } catch (e) {
+    return `[Error serializing: ${e instanceof Error ? e.message : String(e)}]`;
+  }
+}
+
+// Helper to convert Map to object safely
+function mapToObject(map: Map<any, any>): Record<string, any> {
+  const obj: Record<string, any> = {};
+  for (const [key, value] of map.entries()) {
+    if (value instanceof Map) {
+      obj[String(key)] = mapToObject(value);
+    } else if (typeof value === 'bigint') {
+      obj[String(key)] = value.toString();
+    } else {
+      obj[String(key)] = value;
+    }
+  }
+  return obj;
+}
+
 // Server-side client with private key for write operations (cron jobs)
 let serverClient: ReturnType<typeof createClient> | null = null;
 
@@ -745,7 +772,7 @@ export async function evaluateSingleArgument(
       metadata: {
         resultType: typeof storedEvaluation,
         isMap: storedEvaluation instanceof Map,
-        resultStr: JSON.stringify(storedEvaluation instanceof Map ? Object.fromEntries(storedEvaluation) : storedEvaluation).substring(0, 500)
+        resultStr: safeStringify(storedEvaluation instanceof Map ? mapToObject(storedEvaluation) : storedEvaluation)
       }
     });
 

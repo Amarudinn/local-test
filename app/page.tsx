@@ -106,6 +106,6 @@ export default function Home() {
           <p>Powered by GenLayer</p>
         </div>
       </footer>
-    </main>
+    </main >
   );
 }

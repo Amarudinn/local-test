@@ -68,7 +68,7 @@ export interface DurationOption {
 }
 
 export const DURATION_OPTIONS: DurationOption[] = [
-  { label: '5 minutes', value: '5m', minutes: 5 },
+
   { label: '1 hour', value: '1h', minutes: 60 },
   { label: '3 hours', value: '3h', minutes: 180 },
   { label: '6 hours', value: '6h', minutes: 360 },

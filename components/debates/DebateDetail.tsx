@@ -109,7 +109,7 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
       try {
         const dbParticipants = await supabaseApi.getParticipantsByContractAddress(contractAddress);
         if (dbParticipants && dbParticipants.length > 0) {
-          console.log('✅ Participants from database (fast):', dbParticipants.length);
+
           return dbParticipants.map(p => ({
             address: p.participant_address,
             joined_at: p.joined_at,
@@ -121,9 +121,7 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
       }
 
       // Fallback to blockchain (slow but accurate)
-      console.log('📡 Fetching participants from blockchain...');
-      const blockchainParticipants = await getBlockchainParticipants(contractAddress);
-      console.log('✅ Participants from blockchain:', blockchainParticipants.length);
+
 
       // Sync to database for next time (non-blocking)
       if (blockchainParticipants.length > 0) {
@@ -145,7 +143,7 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
       try {
         const dbArguments = await supabaseApi.getArgumentsByContractAddress(contractAddress);
         if (dbArguments && dbArguments.length > 0) {
-          console.log('✅ Arguments from database (fast):', dbArguments.length);
+
           return dbArguments.map(arg => ({
             author: arg.author_address,
             content: arg.content,
@@ -157,9 +155,7 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
       }
 
       // Fallback to blockchain (slow but accurate)
-      console.log('📡 Fetching arguments from blockchain...');
-      const blockchainArguments = await getBlockchainArguments(contractAddress);
-      console.log('✅ Arguments from blockchain:', blockchainArguments.length);
+
 
       // Sync to database for next time (non-blocking)
       if (blockchainArguments.length > 0) {
@@ -193,19 +189,18 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
   } | null>({
     queryKey: ['results', contractAddress],
     queryFn: async () => {
-      console.log('🔍 DEBUG Leaderboard Query - Starting fetch from database...');
-      console.log('🔍 DEBUG Leaderboard Query - Contract address:', contractAddress);
+
 
       try {
         // Fetch from database (leaderboard_results table)
         const dbResults = await supabaseApi.getLeaderboardByContractAddress(contractAddress);
-        console.log('🔍 DEBUG Leaderboard Query - DB Results:', dbResults);
+
 
         if (dbResults && dbResults.all_scores && dbResults.all_scores.length > 0) {
-          console.log('✅ Leaderboard from database - Found', dbResults.all_scores.length, 'scores');
+
           return dbResults;
         }
-        console.log('⚠️ No leaderboard data found in database for contract:', contractAddress);
+
         return null;
       } catch (error) {
         console.error('❌ Error fetching leaderboard from database:', error);
@@ -217,14 +212,7 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
   });
 
   // Debug logging for leaderboard state
-  console.log('🔍 DEBUG Leaderboard State:', {
-    supabaseDebateStatus: supabaseDebate?.status,
-    queryEnabled: supabaseDebate?.status === 'RESOLVED',
-    isLoadingResults,
-    hasResults: !!results,
-    resultsAllScoresLength: results?.all_scores?.length || 0,
-    resultsError: resultsError?.message,
-  });
+
 
   // Check if current user has joined - use both blockchain and database
   const { data: userHasJoinedBlockchain } = useQuery({
@@ -368,29 +356,29 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
 
     try {
       // Force fetch from blockchain (bypass cache)
-      console.log('🔄 Force fetching from blockchain...');
+
 
       // Fetch participants from blockchain
       const blockchainParticipants = await getBlockchainParticipants(contractAddress);
-      console.log('✅ Fetched participants:', blockchainParticipants.length);
+
 
       // Fetch arguments from blockchain
       const blockchainArguments = await getBlockchainArguments(contractAddress);
-      console.log('✅ Fetched arguments:', blockchainArguments.length);
+
 
       // Sync to database
       if (blockchainParticipants.length > 0) {
         await import('@/lib/sync-service').then(({ syncParticipantsToDatabase }) => {
           return syncParticipantsToDatabase(contractAddress, blockchainParticipants);
         });
-        console.log('✅ Synced participants to database');
+
       }
 
       if (blockchainArguments.length > 0) {
         await import('@/lib/sync-service').then(({ syncArgumentsToDatabase }) => {
           return syncArgumentsToDatabase(contractAddress, blockchainArguments);
         });
-        console.log('✅ Synced arguments to database');
+
       }
 
       // Invalidate queries to refetch from database
@@ -421,12 +409,7 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
       // Database is the source of truth for duration since it's set correctly at creation time
       const duration_seconds = supabaseDebate.duration_minutes * 60;
 
-      console.log('🔍 DEBUG displayData Case 1 (Blockchain + Database):', {
-        blockchain_duration_seconds: debateInfo.duration_seconds,
-        database_duration_minutes: supabaseDebate.duration_minutes,
-        calculated_duration_seconds: duration_seconds,
-        using_database_value: true,
-      });
+
 
       return {
         topic: debateInfo.topic,
@@ -453,10 +436,7 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
     // Case 2: Only Supabase data available (blockchain still loading or failed)
     // This is common for newly created debates
     if (supabaseDebate) {
-      console.log('🔍 DEBUG displayData Case 2 (Database only):', {
-        database_duration_minutes: supabaseDebate.duration_minutes,
-        calculated_duration_seconds: supabaseDebate.duration_minutes * 60,
-      });
+
 
       return {
         topic: supabaseDebate.topic,
@@ -476,9 +456,7 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
 
     // Case 3: Only blockchain data available (database query failed)
     if (debateInfo) {
-      console.log('🔍 DEBUG displayData Case 3 (Blockchain only):', {
-        blockchain_duration_seconds: debateInfo.duration_seconds,
-      });
+
 
       return debateInfo;
     }

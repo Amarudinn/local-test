@@ -640,7 +640,7 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                       <div className={`flex items-center justify-between p-2 rounded ${isValid ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
                         <span className="text-sm font-medium">Total:</span>
                         <span className={`text-sm font-bold ${isValid ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                          {total}/100 {isValid ? '✓' : `(${total < 100 ? 'Need ' + (100 - total) + ' more' : 'Reduce by ' + (total - 100)})`}
+                          {total}/100 {isValid ? '' : `(${total < 100 ? 'Need ' + (100 - total) + ' more' : 'Reduce by ' + (total - 100)})`}
                         </span>
                       </div>
                     );

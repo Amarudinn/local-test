@@ -414,7 +414,14 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                 </span>
                 <Switch
                   checked={useCustomParticipants}
-                  onCheckedChange={setUseCustomParticipants}
+                  onCheckedChange={(checked) => {
+                    setUseCustomParticipants(checked);
+                    if (checked) {
+                      setMaxParticipants(20); // Default to 20 when custom is enabled
+                    } else {
+                      setMaxParticipants(10); // Reset to default
+                    }
+                  }}
                   disabled={isSubmitting}
                 />
               </div>

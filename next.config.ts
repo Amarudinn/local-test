@@ -13,6 +13,20 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
 
+  // Allow images from Pinata IPFS gateway
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'gateway.pinata.cloud',
+      },
+      {
+        protocol: 'https',
+        hostname: 'ipfs.io',
+      },
+    ],
+  },
+
   // Environment variables that should be available on the client
   env: {
     NEXT_PUBLIC_GENLAYER_RPC_URL: process.env.NEXT_PUBLIC_GENLAYER_RPC_URL,

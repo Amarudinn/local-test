@@ -95,7 +95,7 @@ export default function DocsPage() {
                                         </div>
                                         <div>
                                             <h3 className="font-semibold">Waiting for Arguments</h3>
-                                            <p className="text-sm text-muted-foreground">New debate created. Users can join. Time has not started yet.</p>
+                                            <p className="text-sm text-muted-foreground">New debate created. Users can join.</p>
                                         </div>
                                     </div>
                                     <div className="flex gap-4 items-start border p-4 rounded-lg">
@@ -104,7 +104,7 @@ export default function DocsPage() {
                                         </div>
                                         <div>
                                             <h3 className="font-semibold">Active Debate</h3>
-                                            <p className="text-sm text-muted-foreground">Arguments are being accepted. Timer is running. Ends when time expires or max participants reached.</p>
+                                            <p className="text-sm text-muted-foreground">Arguments are being accepted. Timer is running. Ends when time expires.</p>
                                         </div>
                                     </div>
                                     <div className="flex gap-4 items-start border p-4 rounded-lg">

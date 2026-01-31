@@ -22,7 +22,7 @@ export function Navbar() {
   ];
 
   const homeOnlyItems = [
-    { href: '#', label: 'How it works', icon: Info },
+    { href: '/how-it-works', label: 'How it works', icon: Info },
     { href: '#', label: 'Docs', icon: FileText },
   ];
 

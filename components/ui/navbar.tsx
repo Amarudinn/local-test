@@ -19,6 +19,9 @@ export function Navbar() {
     { href: '/', label: 'Home', icon: Home },
     { href: '/debates', label: 'Browse', icon: MessageSquare },
     { href: '/debates/create', label: 'Create', icon: PlusCircle },
+  ];
+
+  const homeOnlyItems = [
     { href: '#', label: 'How it works', icon: Info },
     { href: '#', label: 'Docs', icon: FileText },
   ];
@@ -39,12 +42,12 @@ export function Navbar() {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-1">
-              {navItems.map((item) => {
+              {[...navItems, ...(pathname === '/' ? homeOnlyItems : [])].map((item) => {
                 const Icon = item.icon;
                 const isActive = pathname === item.href;
                 return (
                   <Button
-                    key={item.href}
+                    key={item.label}
                     variant={isActive ? 'default' : 'ghost'}
                     size="sm"
                     onClick={() => router.push(item.href)}
@@ -80,7 +83,7 @@ export function Navbar() {
         {/* Mobile Menu Dropdown */}
         {isMenuOpen && (
           <div className="md:hidden border-t py-4 px-2 space-y-2 bg-background absolute left-0 right-0 shadow-lg border-b animate-in slide-in-from-top-2">
-            {navItems.map((item) => {
+            {[...navItems, ...homeOnlyItems].map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
               return (

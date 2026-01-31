@@ -90,28 +90,36 @@ export default function DocsPage() {
                                 <h2 className="text-2xl font-bold">Debate Lifecycle</h2>
                                 <div className="space-y-4">
                                     <div className="flex gap-4 items-start border p-4 rounded-lg">
-                                        <Badge className="bg-green-500 hover:bg-green-600 mt-1">OPEN</Badge>
+                                        <div className="w-24 flex-shrink-0">
+                                            <Badge className="w-full justify-center bg-green-500 hover:bg-green-600">OPEN</Badge>
+                                        </div>
                                         <div>
                                             <h3 className="font-semibold">Waiting for Arguments</h3>
                                             <p className="text-sm text-muted-foreground">New debate created. Users can join. Time has not started yet.</p>
                                         </div>
                                     </div>
                                     <div className="flex gap-4 items-start border p-4 rounded-lg">
-                                        <Badge className="bg-blue-500 hover:bg-blue-600 mt-1">ONGOING</Badge>
+                                        <div className="w-24 flex-shrink-0">
+                                            <Badge className="w-full justify-center bg-blue-500 hover:bg-blue-600">ONGOING</Badge>
+                                        </div>
                                         <div>
                                             <h3 className="font-semibold">Active Debate</h3>
                                             <p className="text-sm text-muted-foreground">Arguments are being accepted. Timer is running. Ends when time expires or max participants reached.</p>
                                         </div>
                                     </div>
                                     <div className="flex gap-4 items-start border p-4 rounded-lg">
-                                        <Badge variant="secondary" className="mt-1">ENDED</Badge>
+                                        <div className="w-24 flex-shrink-0">
+                                            <Badge className="w-full justify-center bg-yellow-500 hover:bg-yellow-600">ENDED</Badge>
+                                        </div>
                                         <div>
                                             <h3 className="font-semibold">Submission Closed</h3>
                                             <p className="text-sm text-muted-foreground">No more arguments accepted. Waiting for final resolution.</p>
                                         </div>
                                     </div>
                                     <div className="flex gap-4 items-start border p-4 rounded-lg">
-                                        <Badge variant="outline" className="border-green-500 text-green-500 mt-1">RESOLVED</Badge>
+                                        <div className="w-24 flex-shrink-0">
+                                            <Badge className="w-full justify-center bg-purple-500 hover:bg-purple-600">RESOLVED</Badge>
+                                        </div>
                                         <div>
                                             <h3 className="font-semibold">Finalized</h3>
                                             <p className="text-sm text-muted-foreground">Winner declared. Leaderboard and detailed scores are public.</p>

@@ -172,7 +172,7 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
   });
 
   // Fetch leaderboard results from database (blockchain is not updated during reveal)
-  const { data: results, isLoading: isLoadingResults } = useQuery<{
+  const { data: results, isLoading: isLoadingResults, error: resultsError } = useQuery<{
     winner: string;
     winner_score: number;
     all_scores: Array<{
@@ -191,17 +191,37 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
   } | null>({
     queryKey: ['results', contractAddress],
     queryFn: async () => {
-      // Fetch from database (leaderboard_results table)
-      const dbResults = await supabaseApi.getLeaderboardByContractAddress(contractAddress);
-      if (dbResults) {
-        console.log('✅ Leaderboard from database');
-        return dbResults;
+      console.log('🔍 DEBUG Leaderboard Query - Starting fetch from database...');
+      console.log('🔍 DEBUG Leaderboard Query - Contract address:', contractAddress);
+
+      try {
+        // Fetch from database (leaderboard_results table)
+        const dbResults = await supabaseApi.getLeaderboardByContractAddress(contractAddress);
+        console.log('🔍 DEBUG Leaderboard Query - DB Results:', dbResults);
+
+        if (dbResults && dbResults.all_scores && dbResults.all_scores.length > 0) {
+          console.log('✅ Leaderboard from database - Found', dbResults.all_scores.length, 'scores');
+          return dbResults;
+        }
+        console.log('⚠️ No leaderboard data found in database for contract:', contractAddress);
+        return null;
+      } catch (error) {
+        console.error('❌ Error fetching leaderboard from database:', error);
+        throw error;
       }
-      console.log('⚠️ No leaderboard data found in database');
-      return null;
     },
     // Enable when supabase shows RESOLVED (blockchain may not be updated)
     enabled: supabaseDebate?.status === 'RESOLVED',
+  });
+
+  // Debug logging for leaderboard state
+  console.log('🔍 DEBUG Leaderboard State:', {
+    supabaseDebateStatus: supabaseDebate?.status,
+    queryEnabled: supabaseDebate?.status === 'RESOLVED',
+    isLoadingResults,
+    hasResults: !!results,
+    resultsAllScoresLength: results?.all_scores?.length || 0,
+    resultsError: resultsError?.message,
   });
 
   // Check if current user has joined - use both blockchain and database

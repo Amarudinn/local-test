@@ -35,7 +35,7 @@ export default function HowItWorksPage() {
         {
             id: 4,
             title: 'Win & Leaderboard',
-            description: 'Arguments are scored instantly. The highest score wins! View detailed feedback and rankings on the global leaderboard.',
+            description: 'Receive instant, unbiased evaluations. The highest quality argument wins! Access detailed performance insights and climb the global leaderboard.',
             icon: Trophy,
             color: 'text-yellow-500',
             bgColor: 'bg-yellow-50 dark:bg-yellow-950',

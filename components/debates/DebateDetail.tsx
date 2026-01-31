@@ -92,19 +92,12 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
     queryFn: () => supabaseApi.getDebateByAddress(contractAddress),
   });
 
-  // Fetch evaluation criteria from blockchain
-  const { data: evaluationCriteria } = useQuery({
-    queryKey: ['evaluation-criteria', contractAddress],
-    queryFn: () => getEvaluationCriteria(contractAddress),
-    staleTime: 60 * 60 * 1000, // Cache for 1 hour - criteria rarely changes
-  });
-
-  // Fetch evaluation criteria weights from blockchain
-  const { data: criteriaWeights } = useQuery({
-    queryKey: ['criteria', contractAddress],
-    queryFn: () => getEvaluationCriteria(contractAddress),
-    enabled: !!contractAddress,
-  });
+  // Parse evaluation criteria from database (faster than blockchain)
+  const criteriaWeights = supabaseDebate?.evaluation_criteria
+    ? (typeof supabaseDebate.evaluation_criteria === 'string'
+      ? JSON.parse(supabaseDebate.evaluation_criteria)
+      : supabaseDebate.evaluation_criteria)
+    : null;
 
   // Fetch participants with hybrid approach (database cache + blockchain fallback)
   const { data: participants, isLoading: isLoadingParticipants } = useQuery<ParticipantInfo[]>({

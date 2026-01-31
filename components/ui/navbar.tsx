@@ -29,8 +29,11 @@ export function Navbar() {
   // Normalize pathname to ensure robust homepage detection (e.g. handle trailing slashes)
   const isHomePage = pathname === '/' || pathname === '/index';
 
-  // Desktop: Show standard links EXCEPT on Homepage
-  const showDesktopStandardLinks = !isHomePage;
+  // Pages that share the "Home" style navbar on Desktop (Centered Menu)
+  const isCenteredMenuPage = isHomePage || pathname === '/how-it-works' || pathname === '/docs';
+
+  // Desktop: Show standard links (Right side) ONLY if NOT a centered menu page
+  const showDesktopStandardLinks = !isCenteredMenuPage;
 
   const mobileItems = [...navItems, ...homeOnlyItems];
 
@@ -49,16 +52,20 @@ export function Navbar() {
             </span>
           </Link>
 
-          {/* Centered Desktop Menu (Home Only) */}
-          {isHomePage && (
+          {/* Centered Desktop Menu (Home, Docs, How it works) */}
+          {isCenteredMenuPage && (
             <div className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
               {homeOnlyItems.map((item) => {
                 const Icon = item.icon;
+                const isActive = pathname === item.href;
                 return (
                   <Link
                     key={item.label}
                     href={item.href}
-                    className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-2"
+                    className={cn(
+                      "text-sm font-medium transition-colors flex items-center gap-2",
+                      isActive ? "text-primary" : "text-muted-foreground hover:text-primary"
+                    )}
                   >
                     <Icon className="h-4 w-4" />
                     {item.label}
@@ -71,7 +78,7 @@ export function Navbar() {
           {/* Right Side Actions */}
           <div className="flex items-center gap-2">
 
-            {/* Desktop Navigation (Non-Home Only) */}
+            {/* Desktop Navigation (Browse, Create - Hidden if Centered Page) */}
             {showDesktopStandardLinks && (
               <div className="hidden md:flex items-center space-x-1">
                 {navItems.map((item) => {
@@ -96,7 +103,7 @@ export function Navbar() {
               </div>
             )}
 
-            {/* Mobile Hamburger Button (Hide on Home) */}
+            {/* Mobile Hamburger Button (Hide ONLY on Home Page, Show on Docs/HowItWorks) */}
             {!isHomePage && (
               <Button
                 variant="ghost"
@@ -109,7 +116,7 @@ export function Navbar() {
             )}
 
             {/* Auth Section */}
-            <div className={cn("pl-2 ml-1", !isHomePage && "border-l")}>
+            <div className={cn("pl-2 ml-1", !isCenteredMenuPage && "border-l")}>
               {isAuthenticated ? <UserProfile /> : <LoginButton />}
             </div>
           </div>

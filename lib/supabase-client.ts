@@ -309,6 +309,8 @@ export const supabaseApi = {
           end_time: debate.end_time,
           status: debate.status,
           participant_count: debate.participant_count || 0,
+          max_participants: debate.max_participants || 10,
+          evaluation_criteria: debate.evaluation_criteria ? JSON.stringify(debate.evaluation_criteria) : null,
           last_synced_at: debate.last_synced_at || null,
         })
         .select('*')

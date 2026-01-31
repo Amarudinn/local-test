@@ -185,6 +185,7 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
             status: 'OPEN',
             participant_count: 0,
             max_participants: finalMaxParticipants, // Custom or default (10)
+            evaluation_criteria: finalCriteria as unknown as Record<string, number>,
             last_synced_at: null,
           });
 

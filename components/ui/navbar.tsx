@@ -23,7 +23,7 @@ export function Navbar() {
 
   const homeOnlyItems = [
     { href: '/how-it-works', label: 'How it works', icon: Info },
-    { href: '#', label: 'Docs', icon: FileText },
+    { href: '/docs', label: 'Docs', icon: FileText },
   ];
 
   // Normalize pathname to ensure robust homepage detection (e.g. handle trailing slashes)

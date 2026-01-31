@@ -99,15 +99,6 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
       : supabaseDebate.evaluation_criteria)
     : null;
 
-  // Debug Criteria
-  useEffect(() => {
-    if (supabaseDebate) {
-      console.log('🔍 DEBUG - Supabase Debate Data:', supabaseDebate);
-      console.log('🔍 DEBUG - Evaluation Criteria Raw:', supabaseDebate.evaluation_criteria);
-      console.log('🔍 DEBUG - Parsed criteriaWeights:', criteriaWeights);
-    }
-  }, [supabaseDebate, criteriaWeights]);
-
   // Fetch participants with hybrid approach (database cache + blockchain fallback)
   const { data: participants, isLoading: isLoadingParticipants } = useQuery<ParticipantInfo[]>({
     queryKey: ['participants', contractAddress],
@@ -449,7 +440,9 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
         // Prefer database status if it's RESOLVED (cron job updates database, not blockchain)
         status: supabaseDebate.status === 'RESOLVED' ? 'RESOLVED' : debateInfo.status,
         participant_count: debateInfo.participant_count,
-        max_participants: debateInfo.max_participants,
+        max_participants: supabaseDebate.max_participants !== undefined && supabaseDebate.max_participants !== null
+          ? supabaseDebate.max_participants
+          : (debateInfo.max_participants || 10),
       };
     }
 
@@ -469,7 +462,9 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
         end_time: new Date(supabaseDebate.end_time).getTime() / 1000,
         status: supabaseDebate.status,
         participant_count: supabaseDebate.participant_count,
-        max_participants: 10, // Default for database-only data
+        max_participants: supabaseDebate.max_participants !== undefined && supabaseDebate.max_participants !== null
+          ? supabaseDebate.max_participants
+          : 10,
       };
     }
 
@@ -552,7 +547,9 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
     status === 'ONGOING' && timeHasExpired ? 'ENDED' : status;
 
   // Check if debate is full
-  const maxParticipants = displayData.max_participants || 10;
+  const maxParticipants = displayData.max_participants !== undefined && displayData.max_participants !== null
+    ? displayData.max_participants
+    : 10;
   const isFull = maxParticipants > 0 && displayData.participant_count >= maxParticipants;
 
   const showJoinButton = authenticated && signerReady && isOpen && !userHasJoined && !timeHasExpired && !isFull;

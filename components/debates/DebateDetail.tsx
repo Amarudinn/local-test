@@ -31,6 +31,7 @@ import { Clock, Users, Calendar, User, AlertCircle, CheckCircle2, Loader2, Troph
 import { AddressDisplay } from '@/components/ui/address-display';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { CountdownTimer } from '@/components/ui/countdown-timer';
+import { DebateCover } from './DebateCover';
 
 interface DebateDetailProps {
   contractAddress: string;
@@ -46,6 +47,7 @@ interface DebateInfo {
   status: DebateStatus;
   participant_count: number;
   max_participants?: number; // Optional for backward compatibility
+  image_url?: string | null;
 }
 
 interface ParticipantInfo {
@@ -443,6 +445,7 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
         max_participants: supabaseDebate.max_participants !== undefined && supabaseDebate.max_participants !== null
           ? supabaseDebate.max_participants
           : (debateInfo.max_participants || 10),
+        image_url: supabaseDebate.image_url,
       };
     }
 
@@ -465,6 +468,7 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
         max_participants: supabaseDebate.max_participants !== undefined && supabaseDebate.max_participants !== null
           ? supabaseDebate.max_participants
           : 10,
+        image_url: supabaseDebate.image_url,
       };
     }
 
@@ -558,7 +562,8 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
   return (
     <div className="space-y-4 md:space-y-6">
       {/* Debate Header */}
-      <Card>
+      <Card className="overflow-hidden">
+        <DebateCover topic={displayData.topic} imageUrl={displayData.image_url} className="h-48 md:h-64 w-full" priority />
         <CardHeader className="pb-3 md:pb-6">
           <div className="flex items-start justify-between gap-2">
             <div className="space-y-2 flex-1 min-w-0">

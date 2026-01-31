@@ -8,6 +8,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { CountdownTimer } from '@/components/ui/countdown-timer';
 import { Debate } from '@/lib/types';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { DebateCover } from './DebateCover';
 
 interface DebateCardProps {
   debate: Debate;
@@ -56,9 +57,10 @@ export function DebateCard({ debate }: DebateCardProps) {
 
   return (
     <Card
-      className="cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] flex flex-col"
+      className="cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] flex flex-col overflow-hidden"
       onClick={handleClick}
     >
+      <DebateCover topic={debate.topic} imageUrl={debate.image_url} className="h-32 w-full flex-shrink-0" />
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
           <div className="flex-1 min-w-0">

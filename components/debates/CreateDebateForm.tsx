@@ -39,6 +39,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { uploadToPinata } from '@/lib/pinata';
+import { ImageIcon, X, Loader2 } from 'lucide-react';
 
 const CRITERIA_DESCRIPTIONS = {
   logic_reasoning: "Is the argument logically sound and well-reasoned?",
@@ -78,6 +80,35 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof CreateDebateFormData, string>>>({});
   const [generalError, setGeneralError] = useState<string>('');
+
+  // Image Upload state
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast.error("Image size too large (max 5MB)");
+        return;
+      }
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    const input = document.getElementById('cover-upload') as HTMLInputElement;
+    if (input) input.value = '';
+  };
 
   /**
    * Validate form data
@@ -155,6 +186,23 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
       const finalMaxParticipants = useCustomParticipants ? maxParticipants : DEFAULT_MAX_PARTICIPANTS;
       const finalCriteria = useCustomCriteria ? criteria : DEFAULT_EVALUATION_CRITERIA;
 
+      // Upload Image if selected
+      let finalImageUrl: string | null = null;
+      if (imageFile) {
+        try {
+          setIsUploadingImage(true);
+          finalImageUrl = await uploadToPinata(imageFile);
+          if (!finalImageUrl) {
+            toast.warning("Failed to upload image, continuing without it.");
+          }
+        } catch (error) {
+          console.error("Image upload error:", error);
+          toast.warning("Image upload failed, debate will be created without cover.");
+        } finally {
+          setIsUploadingImage(false);
+        }
+      }
+
       // Deploy contract to blockchain using client from hook
       const { contractAddress } = await deployDebateContract(
         client,
@@ -203,6 +251,7 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
             max_participants: finalMaxParticipants, // Custom or default (10)
             evaluation_criteria: finalCriteria as unknown as Record<string, number>,
             last_synced_at: null,
+            image_url: finalImageUrl,
           });
 
           syncSuccess = true;
@@ -366,6 +415,51 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                 <span className={`text-muted-foreground flex-shrink-0 ${topicCharCount > VALIDATION.TOPIC_MAX_LENGTH ? 'text-red-500' : ''}`}>
                   {topicCharCount}/{VALIDATION.TOPIC_MAX_LENGTH}
                 </span>
+              </div>
+            </div>
+
+            {/* Cover Image Field (Optional) */}
+            <div className="space-y-2">
+              <Label className="text-sm md:text-base">Cover Image (Optional)</Label>
+              <div
+                className="border-2 border-dashed rounded-lg p-4 flex flex-col items-center justify-center text-center cursor-pointer hover:bg-muted/50 transition-colors relative min-h-[120px]"
+                onClick={() => document.getElementById('cover-upload')?.click()}
+              >
+                {imagePreview ? (
+                  <div className="relative w-full aspect-video max-h-[200px] rounded-md overflow-hidden bg-muted">
+                    <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute top-2 right-2 h-7 w-7 rounded-full shadow-md z-10"
+                      onClick={(e) => { e.stopPropagation(); removeImage(); }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                    {isUploadingImage && (
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-medium">
+                        <Loader2 className="h-6 w-6 animate-spin mr-2" /> Uploading...
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center py-4">
+                    <ImageIcon className="h-10 w-10 text-muted-foreground/50 mb-2" />
+                    <p className="text-sm text-muted-foreground font-medium">Click to upload cover image</p>
+                    <p className="text-xs text-muted-foreground/60 mt-1 max-w-xs">
+                      Leave empty to use an auto-generated abstract gradient
+                    </p>
+                  </div>
+                )}
+                <input
+                  id="cover-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageSelect}
+                  disabled={isSubmitting || isUploadingImage}
+                />
               </div>
             </div>
 

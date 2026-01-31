@@ -335,380 +335,370 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
   const descriptionCharCount = formData.description.length;
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader className="pb-3 md:pb-6">
-        <CardTitle className="text-lg md:text-xl">Create New Debate</CardTitle>
-        <CardDescription className="text-xs md:text-sm">
-          Start a new debate and invite others to participate. The debate will be judged by AI based on logic, evidence, and clarity.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
-          {/* Topic Field */}
-          <div className="space-y-2">
-            <Label htmlFor="topic" className="text-sm md:text-base">
-              Topic <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="topic"
-              placeholder="Enter debate topic..."
-              value={formData.topic}
-              onChange={(e) => handleChange('topic', e.target.value)}
-              disabled={isSubmitting}
-              className={`text-sm md:text-base ${errors.topic ? 'border-red-500' : ''}`}
-              maxLength={VALIDATION.TOPIC_MAX_LENGTH}
-            />
-            <div className="flex justify-between items-start gap-2 text-xs md:text-sm flex-wrap">
-              <span className={`flex-1 ${errors.topic ? 'text-red-500' : 'text-muted-foreground'}`}>
-                {errors.topic || 'A clear, concise statement of the debate topic'}
-              </span>
-              <span className={`text-muted-foreground flex-shrink-0 ${topicCharCount > VALIDATION.TOPIC_MAX_LENGTH ? 'text-red-500' : ''}`}>
-                {topicCharCount}/{VALIDATION.TOPIC_MAX_LENGTH}
-              </span>
-            </div>
-          </div>
-
-          {/* Description Field */}
-          <div className="space-y-2">
-            <Label htmlFor="description" className="text-sm md:text-base">
-              Description <span className="text-red-500">*</span>
-            </Label>
-            <Textarea
-              id="description"
-              placeholder="Provide context and details about the debate..."
-              value={formData.description}
-              onChange={(e) => handleChange('description', e.target.value)}
-              disabled={isSubmitting}
-              className={`min-h-[100px] md:min-h-[120px] text-sm md:text-base ${errors.description ? 'border-red-500' : ''}`}
-              maxLength={VALIDATION.DESCRIPTION_MAX_LENGTH}
-            />
-            <div className="flex justify-between items-start gap-2 text-xs md:text-sm flex-wrap">
-              <span className={`flex-1 ${errors.description ? 'text-red-500' : 'text-muted-foreground'}`}>
-                {errors.description || 'Explain the debate topic, provide context, and set expectations'}
-              </span>
-              <span className={`text-muted-foreground flex-shrink-0 ${descriptionCharCount > VALIDATION.DESCRIPTION_MAX_LENGTH ? 'text-red-500' : ''}`}>
-                {descriptionCharCount}/{VALIDATION.DESCRIPTION_MAX_LENGTH}
-              </span>
-            </div>
-          </div>
-
-          {/* Duration Field */}
-          <div className="space-y-2">
-            <Label htmlFor="duration" className="text-sm md:text-base">
-              Duration <span className="text-red-500">*</span>
-            </Label>
-            <Select
-              value={formData.duration}
-              onValueChange={(value) => handleChange('duration', value)}
-              disabled={isSubmitting}
-            >
-              <SelectTrigger id="duration" className={`text-sm md:text-base ${errors.duration ? 'border-red-500' : ''}`}>
-                <SelectValue placeholder="Select debate duration" />
-              </SelectTrigger>
-              <SelectContent>
-                {DURATION_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value} className="text-sm md:text-base">
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className={`text-xs md:text-sm ${errors.duration ? 'text-red-500' : 'text-muted-foreground'}`}>
-              {errors.duration || 'How long participants have to submit arguments'}
-            </p>
-          </div>
-
-          {/* Max Participants Field */}
-          <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm md:text-base font-medium">
-                Max Participants
+    <TooltipProvider delayDuration={0}>
+      <Card className="w-full max-w-2xl mx-auto">
+        <CardHeader className="pb-3 md:pb-6">
+          <CardTitle className="text-lg md:text-xl">Create New Debate</CardTitle>
+          <CardDescription className="text-xs md:text-sm">
+            Start a new debate and invite others to participate. The debate will be judged by AI based on logic, evidence, and clarity.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+            {/* Topic Field */}
+            <div className="space-y-2">
+              <Label htmlFor="topic" className="text-sm md:text-base">
+                Topic <span className="text-red-500">*</span>
               </Label>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">
-                  {useCustomParticipants ? 'Custom' : 'Default (10)'}
+              <Input
+                id="topic"
+                placeholder="Enter debate topic..."
+                value={formData.topic}
+                onChange={(e) => handleChange('topic', e.target.value)}
+                disabled={isSubmitting}
+                className={`text-sm md:text-base ${errors.topic ? 'border-red-500' : ''}`}
+                maxLength={VALIDATION.TOPIC_MAX_LENGTH}
+              />
+              <div className="flex justify-between items-start gap-2 text-xs md:text-sm flex-wrap">
+                <span className={`flex-1 ${errors.topic ? 'text-red-500' : 'text-muted-foreground'}`}>
+                  {errors.topic || 'A clear, concise statement of the debate topic'}
                 </span>
-                <Switch
-                  checked={useCustomParticipants}
-                  onCheckedChange={(checked) => {
-                    setUseCustomParticipants(checked);
-                    if (checked) {
-                      setMaxParticipants(20); // Default to 20 when custom is enabled
-                    } else {
-                      setMaxParticipants(10); // Reset to default
-                    }
-                  }}
-                  disabled={isSubmitting}
-                />
+                <span className={`text-muted-foreground flex-shrink-0 ${topicCharCount > VALIDATION.TOPIC_MAX_LENGTH ? 'text-red-500' : ''}`}>
+                  {topicCharCount}/{VALIDATION.TOPIC_MAX_LENGTH}
+                </span>
               </div>
             </div>
 
-            {useCustomParticipants && (
+            {/* Description Field */}
+            <div className="space-y-2">
+              <Label htmlFor="description" className="text-sm md:text-base">
+                Description <span className="text-red-500">*</span>
+              </Label>
+              <Textarea
+                id="description"
+                placeholder="Provide context and details about the debate..."
+                value={formData.description}
+                onChange={(e) => handleChange('description', e.target.value)}
+                disabled={isSubmitting}
+                className={`min-h-[100px] md:min-h-[120px] text-sm md:text-base ${errors.description ? 'border-red-500' : ''}`}
+                maxLength={VALIDATION.DESCRIPTION_MAX_LENGTH}
+              />
+              <div className="flex justify-between items-start gap-2 text-xs md:text-sm flex-wrap">
+                <span className={`flex-1 ${errors.description ? 'text-red-500' : 'text-muted-foreground'}`}>
+                  {errors.description || 'Explain the debate topic, provide context, and set expectations'}
+                </span>
+                <span className={`text-muted-foreground flex-shrink-0 ${descriptionCharCount > VALIDATION.DESCRIPTION_MAX_LENGTH ? 'text-red-500' : ''}`}>
+                  {descriptionCharCount}/{VALIDATION.DESCRIPTION_MAX_LENGTH}
+                </span>
+              </div>
+            </div>
+
+            {/* Duration Field */}
+            <div className="space-y-2">
+              <Label htmlFor="duration" className="text-sm md:text-base">
+                Duration <span className="text-red-500">*</span>
+              </Label>
               <Select
-                value={String(maxParticipants)}
-                onValueChange={(value) => setMaxParticipants(Number(value))}
+                value={formData.duration}
+                onValueChange={(value) => handleChange('duration', value)}
                 disabled={isSubmitting}
               >
-                <SelectTrigger className="text-sm md:text-base">
-                  <SelectValue placeholder="Select max participants" />
+                <SelectTrigger id="duration" className={`text-sm md:text-base ${errors.duration ? 'border-red-500' : ''}`}>
+                  <SelectValue placeholder="Select debate duration" />
                 </SelectTrigger>
                 <SelectContent>
-                  {PARTICIPANT_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={String(option.value)} className="text-sm md:text-base">
+                  {DURATION_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value} className="text-sm md:text-base">
                       {option.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            )}
-
-            <p className="text-xs text-muted-foreground">
-              {useCustomParticipants
-                ? (maxParticipants === 0 ? 'No limit on participants' : `Maximum ${maxParticipants} participants can join`)
-                : 'Default allows up to 10 participants'
-              }
-            </p>
-          </div>
-
-          {/* Evaluation Criteria Field */}
-          <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm md:text-base font-medium">
-                Evaluation Criteria
-              </Label>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">
-                  {useCustomCriteria ? 'Custom' : 'Default'}
-                </span>
-                <Switch
-                  checked={useCustomCriteria}
-                  onCheckedChange={(checked) => {
-                    setUseCustomCriteria(checked);
-                    if (!checked) {
-                      setCriteria({ ...DEFAULT_EVALUATION_CRITERIA });
-                    }
-                  }}
-                  disabled={isSubmitting}
-                />
-              </div>
+              <p className={`text-xs md:text-sm ${errors.duration ? 'text-red-500' : 'text-muted-foreground'}`}>
+                {errors.duration || 'How long participants have to submit arguments'}
+              </p>
             </div>
 
-            {useCustomCriteria ? (
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-1">
-                      <Label className="text-xs">Logic & Reasoning</Label>
-                      <TooltipProvider>
+            {/* Max Participants Field */}
+            <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm md:text-base font-medium">
+                  Max Participants
+                </Label>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">
+                    {useCustomParticipants ? 'Custom' : 'Default (10)'}
+                  </span>
+                  <Switch
+                    checked={useCustomParticipants}
+                    onCheckedChange={(checked) => {
+                      setUseCustomParticipants(checked);
+                      if (checked) {
+                        setMaxParticipants(20); // Default to 20 when custom is enabled
+                      } else {
+                        setMaxParticipants(10); // Reset to default
+                      }
+                    }}
+                    disabled={isSubmitting}
+                  />
+                </div>
+              </div>
+
+              {useCustomParticipants && (
+                <Select
+                  value={String(maxParticipants)}
+                  onValueChange={(value) => setMaxParticipants(Number(value))}
+                  disabled={isSubmitting}
+                >
+                  <SelectTrigger className="text-sm md:text-base">
+                    <SelectValue placeholder="Select max participants" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PARTICIPANT_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={String(option.value)} className="text-sm md:text-base">
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+
+              <p className="text-xs text-muted-foreground">
+                {useCustomParticipants
+                  ? (maxParticipants === 0 ? 'No limit on participants' : `Maximum ${maxParticipants} participants can join`)
+                  : 'Default allows up to 10 participants'
+                }
+              </p>
+            </div>
+
+            {/* Evaluation Criteria Field */}
+            <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm md:text-base font-medium">
+                  Evaluation Criteria
+                </Label>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">
+                    {useCustomCriteria ? 'Custom' : 'Default'}
+                  </span>
+                  <Switch
+                    checked={useCustomCriteria}
+                    onCheckedChange={(checked) => {
+                      setUseCustomCriteria(checked);
+                      if (!checked) {
+                        setCriteria({ ...DEFAULT_EVALUATION_CRITERIA });
+                      }
+                    }}
+                    disabled={isSubmitting}
+                  />
+                </div>
+              </div>
+
+              {useCustomCriteria ? (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1">
+                        <Label className="text-xs">Logic & Reasoning</Label>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Info className="h-3 w-3 text-muted-foreground cursor-help" />
                           </TooltipTrigger>
-                          <TooltipContent>
+                          <TooltipContent side="top">
                             <p className="max-w-xs text-xs">{CRITERIA_DESCRIPTIONS.logic_reasoning}</p>
                           </TooltipContent>
                         </Tooltip>
-                      </TooltipProvider>
+                      </div>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={criteria.logic_reasoning}
+                        onChange={(e) => setCriteria(prev => ({ ...prev, logic_reasoning: Number(e.target.value) || 0 }))}
+                        disabled={isSubmitting}
+                        className="text-sm"
+                      />
                     </div>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={criteria.logic_reasoning}
-                      onChange={(e) => setCriteria(prev => ({ ...prev, logic_reasoning: Number(e.target.value) || 0 }))}
-                      disabled={isSubmitting}
-                      className="text-sm"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-1">
-                      <Label className="text-xs">Evidence & Facts</Label>
-                      <TooltipProvider>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1">
+                        <Label className="text-xs">Evidence & Facts</Label>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Info className="h-3 w-3 text-muted-foreground cursor-help" />
                           </TooltipTrigger>
-                          <TooltipContent>
+                          <TooltipContent side="top">
                             <p className="max-w-xs text-xs">{CRITERIA_DESCRIPTIONS.evidence_facts}</p>
                           </TooltipContent>
                         </Tooltip>
-                      </TooltipProvider>
+                      </div>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={criteria.evidence_facts}
+                        onChange={(e) => setCriteria(prev => ({ ...prev, evidence_facts: Number(e.target.value) || 0 }))}
+                        disabled={isSubmitting}
+                        className="text-sm"
+                      />
                     </div>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={criteria.evidence_facts}
-                      onChange={(e) => setCriteria(prev => ({ ...prev, evidence_facts: Number(e.target.value) || 0 }))}
-                      disabled={isSubmitting}
-                      className="text-sm"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-1">
-                      <Label className="text-xs">Clarity</Label>
-                      <TooltipProvider>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1">
+                        <Label className="text-xs">Clarity</Label>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Info className="h-3 w-3 text-muted-foreground cursor-help" />
                           </TooltipTrigger>
-                          <TooltipContent>
+                          <TooltipContent side="top">
                             <p className="max-w-xs text-xs">{CRITERIA_DESCRIPTIONS.clarity}</p>
                           </TooltipContent>
                         </Tooltip>
-                      </TooltipProvider>
+                      </div>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={criteria.clarity}
+                        onChange={(e) => setCriteria(prev => ({ ...prev, clarity: Number(e.target.value) || 0 }))}
+                        disabled={isSubmitting}
+                        className="text-sm"
+                      />
                     </div>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={criteria.clarity}
-                      onChange={(e) => setCriteria(prev => ({ ...prev, clarity: Number(e.target.value) || 0 }))}
-                      disabled={isSubmitting}
-                      className="text-sm"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-1">
-                      <Label className="text-xs">Relevance</Label>
-                      <TooltipProvider>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1">
+                        <Label className="text-xs">Relevance</Label>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Info className="h-3 w-3 text-muted-foreground cursor-help" />
                           </TooltipTrigger>
-                          <TooltipContent>
+                          <TooltipContent side="top">
                             <p className="max-w-xs text-xs">{CRITERIA_DESCRIPTIONS.relevance}</p>
                           </TooltipContent>
                         </Tooltip>
-                      </TooltipProvider>
+                      </div>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={criteria.relevance}
+                        onChange={(e) => setCriteria(prev => ({ ...prev, relevance: Number(e.target.value) || 0 }))}
+                        disabled={isSubmitting}
+                        className="text-sm"
+                      />
                     </div>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={criteria.relevance}
-                      onChange={(e) => setCriteria(prev => ({ ...prev, relevance: Number(e.target.value) || 0 }))}
-                      disabled={isSubmitting}
-                      className="text-sm"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-1">
-                      <Label className="text-xs">Originality</Label>
-                      <TooltipProvider>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1">
+                        <Label className="text-xs">Originality</Label>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Info className="h-3 w-3 text-muted-foreground cursor-help" />
                           </TooltipTrigger>
-                          <TooltipContent>
+                          <TooltipContent side="top">
                             <p className="max-w-xs text-xs">{CRITERIA_DESCRIPTIONS.originality}</p>
                           </TooltipContent>
                         </Tooltip>
-                      </TooltipProvider>
+                      </div>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={criteria.originality}
+                        onChange={(e) => setCriteria(prev => ({ ...prev, originality: Number(e.target.value) || 0 }))}
+                        disabled={isSubmitting}
+                        className="text-sm"
+                      />
                     </div>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={criteria.originality}
-                      onChange={(e) => setCriteria(prev => ({ ...prev, originality: Number(e.target.value) || 0 }))}
-                      disabled={isSubmitting}
-                      className="text-sm"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-1">
-                      <Label className="text-xs">Persuasiveness</Label>
-                      <TooltipProvider>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-1">
+                        <Label className="text-xs">Persuasiveness</Label>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Info className="h-3 w-3 text-muted-foreground cursor-help" />
                           </TooltipTrigger>
-                          <TooltipContent>
+                          <TooltipContent side="top">
                             <p className="max-w-xs text-xs">{CRITERIA_DESCRIPTIONS.persuasiveness}</p>
                           </TooltipContent>
                         </Tooltip>
-                      </TooltipProvider>
+                      </div>
+                      <Input
+                        type="number"
+                        min="0"
+                        max="100"
+                        value={criteria.persuasiveness}
+                        onChange={(e) => setCriteria(prev => ({ ...prev, persuasiveness: Number(e.target.value) || 0 }))}
+                        disabled={isSubmitting}
+                        className="text-sm"
+                      />
                     </div>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={criteria.persuasiveness}
-                      onChange={(e) => setCriteria(prev => ({ ...prev, persuasiveness: Number(e.target.value) || 0 }))}
-                      disabled={isSubmitting}
-                      className="text-sm"
-                    />
                   </div>
-                </div>
 
-                {/* Total Counter */}
-                {(() => {
-                  const total = criteria.logic_reasoning + criteria.evidence_facts + criteria.clarity +
-                    criteria.relevance + criteria.originality + criteria.persuasiveness;
-                  const isValid = total === 100;
-                  return (
-                    <div className={`flex items-center justify-between p-2 rounded ${isValid ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
-                      <span className="text-sm font-medium">Total:</span>
-                      <span className={`text-sm font-bold ${isValid ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                        {total}/100 {isValid ? '✓' : `(${total < 100 ? 'Need ' + (100 - total) + ' more' : 'Reduce by ' + (total - 100)})`}
-                      </span>
-                    </div>
-                  );
-                })()}
-              </div>
-            ) : (
-              <div className="text-xs text-muted-foreground space-y-1">
-                <p>Default weights:</p>
-                <p>Logic: 25, Evidence: 20, Clarity: 15, Relevance: 15, Originality: 15, Persuasiveness: 10</p>
+                  {/* Total Counter */}
+                  {(() => {
+                    const total = criteria.logic_reasoning + criteria.evidence_facts + criteria.clarity +
+                      criteria.relevance + criteria.originality + criteria.persuasiveness;
+                    const isValid = total === 100;
+                    return (
+                      <div className={`flex items-center justify-between p-2 rounded ${isValid ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
+                        <span className="text-sm font-medium">Total:</span>
+                        <span className={`text-sm font-bold ${isValid ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                          {total}/100 {isValid ? '✓' : `(${total < 100 ? 'Need ' + (100 - total) + ' more' : 'Reduce by ' + (total - 100)})`}
+                        </span>
+                      </div>
+                    );
+                  })()}
+                </div>
+              ) : (
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <p>Default weights:</p>
+                  <p>Logic: 25, Evidence: 20, Clarity: 15, Relevance: 15, Originality: 15, Persuasiveness: 10</p>
+                </div>
+              )}
+            </div>
+
+            {/* General Error Message */}
+            {generalError && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                <p className="text-xs md:text-sm text-red-600 break-words">{generalError}</p>
               </div>
             )}
-          </div>
 
-          {/* General Error Message */}
-          {generalError && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-xs md:text-sm text-red-600 break-words">{generalError}</p>
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-3 justify-end">
-            {onCancel && (
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-3 justify-end">
+              {onCancel && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onCancel}
+                  disabled={isSubmitting}
+                  className="w-full sm:w-auto text-sm md:text-base"
+                >
+                  Cancel
+                </Button>
+              )}
               <Button
-                type="button"
-                variant="outline"
-                onClick={onCancel}
-                disabled={isSubmitting}
+                type="submit"
+                disabled={isSubmitting || !authenticated || !signerReady}
                 className="w-full sm:w-auto text-sm md:text-base"
               >
-                Cancel
+                {isSubmitting ? 'Creating Debate...' : 'Create Debate'}
               </Button>
+            </div>
+
+            {/* Authentication Warning */}
+            {!authenticated && (
+              <p className="text-xs md:text-sm text-amber-600 text-center">
+                Please log in to create a debate
+              </p>
             )}
-            <Button
-              type="submit"
-              disabled={isSubmitting || !authenticated || !signerReady}
-              className="w-full sm:w-auto text-sm md:text-base"
-            >
-              {isSubmitting ? 'Creating Debate...' : 'Create Debate'}
-            </Button>
-          </div>
 
-          {/* Authentication Warning */}
-          {!authenticated && (
-            <p className="text-xs md:text-sm text-amber-600 text-center">
-              Please log in to create a debate
-            </p>
-          )}
-
-          {/* Wallet Loading Warning */}
-          {authenticated && !signerReady && (
-            <p className="text-xs md:text-sm text-amber-600 text-center">
-              Initializing wallet...
-            </p>
-          )}
-        </form>
-      </CardContent>
-    </Card>
+            {/* Wallet Loading Warning */}
+            {authenticated && !signerReady && (
+              <p className="text-xs md:text-sm text-amber-600 text-center">
+                Initializing wallet...
+              </p>
+            )}
+          </form>
+        </CardContent>
+      </Card>
+    </TooltipProvider>
   );
 }

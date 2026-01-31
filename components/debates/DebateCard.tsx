@@ -49,7 +49,9 @@ export function DebateCard({ debate }: DebateCardProps) {
     debate.status === 'ONGOING' && timeHasExpired ? 'ENDED' : debate.status;
 
   // Check if debate is full (use debate.max_participants if available, default to 10)
-  const maxParticipants = debate.max_participants || 10;
+  const maxParticipants = debate.max_participants !== undefined && debate.max_participants !== null
+    ? debate.max_participants
+    : 10;
   const isFull = maxParticipants > 0 && debate.participant_count >= maxParticipants;
 
   return (

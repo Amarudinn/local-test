@@ -542,8 +542,8 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
   const effectiveStatus: DebateStatus =
     status === 'ONGOING' && timeHasExpired ? 'ENDED' : status;
 
-  // Check if debate is full - use evaluationCriteria from blockchain (more accurate)
-  const maxParticipants = evaluationCriteria?.max_participants || displayData.max_participants || 10;
+  // Check if debate is full
+  const maxParticipants = displayData.max_participants || 10;
   const isFull = maxParticipants > 0 && displayData.participant_count >= maxParticipants;
 
   const showJoinButton = authenticated && signerReady && isOpen && !userHasJoined && !timeHasExpired && !isFull;
@@ -662,42 +662,42 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
                   <CardContent className="space-y-2">
                     <div className="space-y-2 text-xs md:text-sm">
                       <div className="flex items-start gap-2">
-                        <div className="min-w-[45px] font-bold text-blue-900 dark:text-blue-100">{evaluationCriteria?.logic_reasoning || 25}%</div>
+                        <div className="min-w-[45px] font-bold text-blue-900 dark:text-blue-100">{criteriaWeights?.logic_reasoning || 25}%</div>
                         <div>
                           <div className="font-semibold text-blue-900 dark:text-blue-100">Logic & Reasoning</div>
                           <div className="text-blue-700 dark:text-blue-300">Is the argument logically sound and well-reasoned?</div>
                         </div>
                       </div>
                       <div className="flex items-start gap-2">
-                        <div className="min-w-[45px] font-bold text-blue-900 dark:text-blue-100">{evaluationCriteria?.evidence_facts || 20}%</div>
+                        <div className="min-w-[45px] font-bold text-blue-900 dark:text-blue-100">{criteriaWeights?.evidence_facts || 20}%</div>
                         <div>
                           <div className="font-semibold text-blue-900 dark:text-blue-100">Evidence & Facts</div>
                           <div className="text-blue-700 dark:text-blue-300">Does it provide credible evidence and facts?</div>
                         </div>
                       </div>
                       <div className="flex items-start gap-2">
-                        <div className="min-w-[45px] font-bold text-blue-900 dark:text-blue-100">{evaluationCriteria?.clarity || 15}%</div>
+                        <div className="min-w-[45px] font-bold text-blue-900 dark:text-blue-100">{criteriaWeights?.clarity || 15}%</div>
                         <div>
                           <div className="font-semibold text-blue-900 dark:text-blue-100">Clarity</div>
                           <div className="text-blue-700 dark:text-blue-300">Is it clear and easy to understand?</div>
                         </div>
                       </div>
                       <div className="flex items-start gap-2">
-                        <div className="min-w-[45px] font-bold text-blue-900 dark:text-blue-100">{evaluationCriteria?.relevance || 15}%</div>
+                        <div className="min-w-[45px] font-bold text-blue-900 dark:text-blue-100">{criteriaWeights?.relevance || 15}%</div>
                         <div>
                           <div className="font-semibold text-blue-900 dark:text-blue-100">Relevance</div>
                           <div className="text-blue-700 dark:text-blue-300">Is it relevant to the debate topic?</div>
                         </div>
                       </div>
                       <div className="flex items-start gap-2">
-                        <div className="min-w-[45px] font-bold text-blue-900 dark:text-blue-100">{evaluationCriteria?.originality || 15}%</div>
+                        <div className="min-w-[45px] font-bold text-blue-900 dark:text-blue-100">{criteriaWeights?.originality || 15}%</div>
                         <div>
                           <div className="font-semibold text-blue-900 dark:text-blue-100">Originality</div>
                           <div className="text-blue-700 dark:text-blue-300">Does it offer unique perspectives or creative insights?</div>
                         </div>
                       </div>
                       <div className="flex items-start gap-2">
-                        <div className="min-w-[45px] font-bold text-blue-900 dark:text-blue-100">{evaluationCriteria?.persuasiveness || 10}%</div>
+                        <div className="min-w-[45px] font-bold text-blue-900 dark:text-blue-100">{criteriaWeights?.persuasiveness || 10}%</div>
                         <div>
                           <div className="font-semibold text-blue-900 dark:text-blue-100">Persuasiveness</div>
                           <div className="text-blue-700 dark:text-blue-300">How convincing and compelling is the argument?</div>

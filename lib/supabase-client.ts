@@ -86,6 +86,7 @@ export interface Debate {
   status: 'OPEN' | 'ONGOING' | 'ENDED' | 'RESOLVED';
   participant_count: number;
   max_participants?: number; // Optional for backward compatibility
+  evaluation_criteria?: string | Record<string, number>; // JSON string or parsed object
   last_synced_at: Date | null; // Timestamp of last blockchain sync
   updated_at: Date;
 }

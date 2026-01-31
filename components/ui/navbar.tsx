@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { LoginButton, UserProfile } from '@/components/auth';
 import { useAuth } from '@/lib/hooks/useAuth';
-import { Home, MessageSquare, PlusCircle, Menu, X, Info, FileText } from 'lucide-react';
+import { Home, MessageSquare, PlusCircle, Menu, X, Info, FileText, Map as MapIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 
@@ -24,13 +24,14 @@ export function Navbar() {
   const homeOnlyItems = [
     { href: '/how-it-works', label: 'How it works', icon: Info },
     { href: '/docs', label: 'Docs', icon: FileText },
+    { href: '/roadmap', label: 'Roadmap', icon: MapIcon },
   ];
 
   // Normalize pathname to ensure robust homepage detection (e.g. handle trailing slashes)
   const isHomePage = pathname === '/' || pathname === '/index';
 
   // Pages that share the "Home" style navbar on Desktop (Centered Menu)
-  const isCenteredMenuPage = isHomePage || pathname === '/how-it-works' || pathname === '/docs';
+  const isCenteredMenuPage = isHomePage || pathname === '/how-it-works' || pathname === '/docs' || pathname === '/roadmap';
 
   // Desktop: Show standard links (Right side) ONLY if NOT a centered menu page
   const showDesktopStandardLinks = !isCenteredMenuPage;

@@ -502,7 +502,7 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                         <Label className="text-xs">Logic & Reasoning</Label>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                            <Info className="h-3 w-3 text-muted-foreground cursor-pointer" />
                           </TooltipTrigger>
                           <TooltipContent side="top">
                             <p className="max-w-xs text-xs">{CRITERIA_DESCRIPTIONS.logic_reasoning}</p>
@@ -524,7 +524,7 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                         <Label className="text-xs">Evidence & Facts</Label>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                            <Info className="h-3 w-3 text-muted-foreground cursor-pointer" />
                           </TooltipTrigger>
                           <TooltipContent side="top">
                             <p className="max-w-xs text-xs">{CRITERIA_DESCRIPTIONS.evidence_facts}</p>
@@ -546,7 +546,7 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                         <Label className="text-xs">Clarity</Label>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                            <Info className="h-3 w-3 text-muted-foreground cursor-pointer" />
                           </TooltipTrigger>
                           <TooltipContent side="top">
                             <p className="max-w-xs text-xs">{CRITERIA_DESCRIPTIONS.clarity}</p>
@@ -568,7 +568,7 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                         <Label className="text-xs">Relevance</Label>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                            <Info className="h-3 w-3 text-muted-foreground cursor-pointer" />
                           </TooltipTrigger>
                           <TooltipContent side="top">
                             <p className="max-w-xs text-xs">{CRITERIA_DESCRIPTIONS.relevance}</p>
@@ -590,7 +590,7 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                         <Label className="text-xs">Originality</Label>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                            <Info className="h-3 w-3 text-muted-foreground cursor-pointer" />
                           </TooltipTrigger>
                           <TooltipContent side="top">
                             <p className="max-w-xs text-xs">{CRITERIA_DESCRIPTIONS.originality}</p>
@@ -612,7 +612,7 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                         <Label className="text-xs">Persuasiveness</Label>
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                            <Info className="h-3 w-3 text-muted-foreground cursor-pointer" />
                           </TooltipTrigger>
                           <TooltipContent side="top">
                             <p className="max-w-xs text-xs">{CRITERIA_DESCRIPTIONS.persuasiveness}</p>

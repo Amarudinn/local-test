@@ -13,6 +13,6 @@ jobs:
     steps:
       - name: Call Sync Queue API
         run: |
-          curl -X POST https://your-app.vercel.app/api/cron/process-sync-queue \
+          curl -X POST https://debateroom.fun/api/cron/process-sync-queue \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json"

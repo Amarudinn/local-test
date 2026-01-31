@@ -516,7 +516,7 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                         value={criteria.logic_reasoning}
                         onChange={(e) => setCriteria(prev => ({ ...prev, logic_reasoning: Number(e.target.value) || 0 }))}
                         disabled={isSubmitting}
-                        className="text-sm"
+                        className="text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
                     <div className="space-y-1">
@@ -538,7 +538,7 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                         value={criteria.evidence_facts}
                         onChange={(e) => setCriteria(prev => ({ ...prev, evidence_facts: Number(e.target.value) || 0 }))}
                         disabled={isSubmitting}
-                        className="text-sm"
+                        className="text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
                     <div className="space-y-1">
@@ -560,7 +560,7 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                         value={criteria.clarity}
                         onChange={(e) => setCriteria(prev => ({ ...prev, clarity: Number(e.target.value) || 0 }))}
                         disabled={isSubmitting}
-                        className="text-sm"
+                        className="text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
                     <div className="space-y-1">
@@ -582,7 +582,7 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                         value={criteria.relevance}
                         onChange={(e) => setCriteria(prev => ({ ...prev, relevance: Number(e.target.value) || 0 }))}
                         disabled={isSubmitting}
-                        className="text-sm"
+                        className="text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
                     <div className="space-y-1">
@@ -604,7 +604,7 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                         value={criteria.originality}
                         onChange={(e) => setCriteria(prev => ({ ...prev, originality: Number(e.target.value) || 0 }))}
                         disabled={isSubmitting}
-                        className="text-sm"
+                        className="text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
                     <div className="space-y-1">
@@ -626,7 +626,7 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                         value={criteria.persuasiveness}
                         onChange={(e) => setCriteria(prev => ({ ...prev, persuasiveness: Number(e.target.value) || 0 }))}
                         disabled={isSubmitting}
-                        className="text-sm"
+                        className="text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                     </div>
                   </div>
@@ -637,8 +637,7 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                       criteria.relevance + criteria.originality + criteria.persuasiveness;
                     const isValid = total === 100;
                     return (
-                      <div className={`flex items-center justify-between p-2 rounded ${isValid ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
-                        <span className="text-sm font-medium">Total:</span>
+                      <div className={`flex items-center justify-end p-2 rounded ${isValid ? 'bg-green-100 dark:bg-green-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
                         <span className={`text-sm font-bold ${isValid ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                           {total}/100 {isValid ? '' : `(${total < 100 ? 'Need ' + (100 - total) + ' more' : 'Reduce by ' + (total - 100)})`}
                         </span>

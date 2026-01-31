@@ -92,18 +92,20 @@ export function Navbar() {
               </div>
             )}
 
-            {/* Mobile Hamburger Button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-              {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-            </Button>
+            {/* Mobile Hamburger Button (Hide on Home) */}
+            {!isHomePage && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="md:hidden"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+              >
+                {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </Button>
+            )}
 
             {/* Auth Section */}
-            <div className="pl-2 border-l ml-1">
+            <div className={cn("pl-2 ml-1", !isHomePage && "border-l")}>
               {isAuthenticated ? <UserProfile /> : <LoginButton />}
             </div>
           </div>

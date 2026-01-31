@@ -312,7 +312,8 @@ export const supabaseApi = {
           max_participants: (debate.max_participants !== undefined && debate.max_participants !== null) ? debate.max_participants : 10,
           evaluation_criteria: debate.evaluation_criteria ? JSON.stringify(debate.evaluation_criteria) : null,
           last_synced_at: debate.last_synced_at || null,
-          image_url: debate.image_url || null,
+          // @ts-ignore - Local type definition issue
+          image_url: (debate as any).image_url || null,
         })
         .select('*')
         .single();

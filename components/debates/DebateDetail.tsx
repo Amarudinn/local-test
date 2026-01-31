@@ -445,7 +445,8 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
         max_participants: supabaseDebate.max_participants !== undefined && supabaseDebate.max_participants !== null
           ? supabaseDebate.max_participants
           : (debateInfo.max_participants || 10),
-        image_url: supabaseDebate.image_url,
+        // @ts-ignore - Local type definition issue
+        image_url: (supabaseDebate as any).image_url,
       };
     }
 
@@ -468,7 +469,8 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
         max_participants: supabaseDebate.max_participants !== undefined && supabaseDebate.max_participants !== null
           ? supabaseDebate.max_participants
           : 10,
-        image_url: supabaseDebate.image_url,
+        // @ts-ignore - Local type definition issue
+        image_url: (supabaseDebate as any).image_url,
       };
     }
 

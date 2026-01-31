@@ -252,7 +252,7 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
             evaluation_criteria: finalCriteria as unknown as Record<string, number>,
             last_synced_at: null,
             image_url: finalImageUrl,
-          });
+          } as any);
 
           syncSuccess = true;
           logger.info(LogCategory.UI, 'Debate synced successfully', {

@@ -26,6 +26,9 @@ export function Navbar() {
     { href: '#', label: 'Docs', icon: FileText },
   ];
 
+  const isHomePage = pathname === '/';
+  const desktopItems = isHomePage ? [...navItems, ...homeOnlyItems] : navItems;
+
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto px-4">
@@ -42,7 +45,7 @@ export function Navbar() {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-1">
-              {[...navItems, ...(pathname === '/' ? homeOnlyItems : [])].map((item) => {
+              {desktopItems.map((item) => {
                 const Icon = item.icon;
                 const isActive = pathname === item.href;
                 return (

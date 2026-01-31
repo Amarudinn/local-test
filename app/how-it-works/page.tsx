@@ -35,7 +35,7 @@ export default function HowItWorksPage() {
         {
             id: 4,
             title: 'Win & Leaderboard',
-            description: 'Receive instant, unbiased evaluations. The highest quality argument wins! Access detailed performance insights and climb the global leaderboard.',
+            description: 'The highest quality argument wins! Access detailed performance insights and climb the leaderboard.',
             icon: Trophy,
             color: 'text-yellow-500',
             bgColor: 'bg-yellow-50 dark:bg-yellow-950',
@@ -56,27 +56,17 @@ export default function HowItWorksPage() {
                         </h1>
                         <p className="text-muted-foreground text-lg md:text-xl max-w-2xl mx-auto">
                             A decentralized platform where arguments are judged by AI, not popularity.
-                            Fair, transparent, and built on blockchain.
+                            Fair, transparent, and built on GenLayer.
                         </p>
                     </div>
 
                     {/* Steps */}
-                    <div className="grid gap-6 md:gap-8 relative">
-                        {/* Connecting Line (Desktop) */}
-                        <div className="hidden md:block absolute left-[27px] top-8 bottom-8 w-0.5 bg-border -z-10" />
-
+                    <div className="grid gap-6 md:gap-8">
                         {steps.map((step) => {
-                            const Icon = step.icon;
                             return (
-                                <div key={step.id} className="relative flex gap-6 md:gap-8 items-start">
-
-                                    {/* Icon Circle */}
-                                    <div className={`flex-shrink-0 w-14 h-14 rounded-full border-2 border-background shadow-sm flex items-center justify-center ${step.bgColor}`}>
-                                        <Icon className={`w-6 h-6 ${step.color}`} />
-                                    </div>
-
+                                <div key={step.id} className="relative">
                                     {/* Content Card */}
-                                    <Card className="flex-1 hover:shadow-md transition-shadow">
+                                    <Card className="hover:shadow-md transition-shadow">
                                         <CardContent className="p-6">
                                             <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-2">
                                                 <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -102,12 +92,7 @@ export default function HowItWorksPage() {
                                 <ArrowRight className="w-5 h-5" />
                             </Button>
                         </Link>
-                        <p className="mt-4 text-sm text-muted-foreground flex items-center justify-center gap-2">
-                            <CheckCircle2 className="w-4 h-4 text-green-500" />
-                            Free to join • No gas fees for reading
-                        </p>
                     </div>
-
                 </div>
             </main>
         </div>

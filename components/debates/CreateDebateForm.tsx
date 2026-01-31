@@ -32,6 +32,22 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { logger, LogCategory } from '@/lib/logger';
 import { toast } from '@/lib/toast';
+import { Info } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+
+const CRITERIA_DESCRIPTIONS = {
+  logic_reasoning: "Is the argument logically sound and well-reasoned?",
+  evidence_facts: "Does it provide credible evidence and facts?",
+  clarity: "Is it clear and easy to understand?",
+  relevance: "Is it relevant to the debate topic?",
+  originality: "Does it offer unique perspectives or creative insights?",
+  persuasiveness: "How convincing and compelling is the argument?",
+};
 
 interface CreateDebateFormProps {
   onSuccess?: (contractAddress: string) => void;
@@ -481,7 +497,19 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
               <div className="space-y-3">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <Label className="text-xs">Logic & Reasoning</Label>
+                    <div className="flex items-center gap-1">
+                      <Label className="text-xs">Logic & Reasoning</Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs text-xs">{CRITERIA_DESCRIPTIONS.logic_reasoning}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                     <Input
                       type="number"
                       min="0"
@@ -493,7 +521,19 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">Evidence & Facts</Label>
+                    <div className="flex items-center gap-1">
+                      <Label className="text-xs">Evidence & Facts</Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs text-xs">{CRITERIA_DESCRIPTIONS.evidence_facts}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                     <Input
                       type="number"
                       min="0"
@@ -505,7 +545,19 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">Clarity</Label>
+                    <div className="flex items-center gap-1">
+                      <Label className="text-xs">Clarity</Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs text-xs">{CRITERIA_DESCRIPTIONS.clarity}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                     <Input
                       type="number"
                       min="0"
@@ -517,7 +569,19 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">Relevance</Label>
+                    <div className="flex items-center gap-1">
+                      <Label className="text-xs">Relevance</Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs text-xs">{CRITERIA_DESCRIPTIONS.relevance}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                     <Input
                       type="number"
                       min="0"
@@ -529,7 +593,19 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">Originality</Label>
+                    <div className="flex items-center gap-1">
+                      <Label className="text-xs">Originality</Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs text-xs">{CRITERIA_DESCRIPTIONS.originality}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                     <Input
                       type="number"
                       min="0"
@@ -541,7 +617,19 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">Persuasiveness</Label>
+                    <div className="flex items-center gap-1">
+                      <Label className="text-xs">Persuasiveness</Label>
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs text-xs">{CRITERIA_DESCRIPTIONS.persuasiveness}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    </div>
                     <Input
                       type="number"
                       min="0"

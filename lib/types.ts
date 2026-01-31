@@ -1,5 +1,5 @@
 /**
- * Type definitions for Ruang Debat application
+ * Type definitions for Debate Room application
  */
 
 // ============================================================================

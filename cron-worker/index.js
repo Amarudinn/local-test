@@ -1,5 +1,5 @@
 /**
- * VPS Direct Processor for Ruang Debat
+ * VPS Direct Processor for Debate Room
  * 
  * This script runs DIRECTLY on VPS, processing evaluations without
  * going through Vercel. It connects directly to:

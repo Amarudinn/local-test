@@ -22,7 +22,7 @@ export default function Home() {
       <div className="flex-1 flex flex-col items-center justify-center p-4 md:p-6 lg:p-8">
         <div className="max-w-3xl w-full text-center space-y-4 md:space-y-6">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight">
-            Welcome to Ruang Debat
+            Welcome to Debate Room
           </h2>
           <p className="text-base md:text-lg lg:text-xl text-muted-foreground px-2">
             A decentralized debate platform powered by GenLayer

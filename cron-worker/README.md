@@ -1,4 +1,4 @@
-# VPS Direct Processor for Ruang Debat
+# VPS Direct Processor for Debate Room
 
 Script Node.js yang berjalan di VPS dan memproses evaluasi AI **langsung** tanpa melalui Vercel.
 

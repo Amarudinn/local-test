@@ -1,6 +1,6 @@
-# Ruang Debat Database Migrations
+# Debate Room Database Migrations
 
-This directory contains SQL migration scripts for the Ruang Debat Supabase database schema.
+This directory contains SQL migration scripts for the Debate Room Supabase database schema.
 
 ## Overview
 

@@ -1,4 +1,4 @@
-# Ruang Debat - Decentralized Debate Platform
+# Debate Room - Decentralized Debate Platform
 
 A decentralized debate platform built on GenLayer blockchain with AI-powered judging.
 

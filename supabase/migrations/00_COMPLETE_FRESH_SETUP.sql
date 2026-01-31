@@ -1,5 +1,5 @@
 -- ============================================================================
--- COMPLETE DATABASE SETUP - Ruang Debat (Fresh Install)
+-- COMPLETE DATABASE SETUP - Debate Room (Fresh Install)
 -- ============================================================================
 -- Run this ONCE on a fresh/empty Supabase database
 -- Includes: All tables + Real-time AI Evaluation System (6 Criteria)

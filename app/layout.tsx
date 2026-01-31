@@ -8,7 +8,7 @@ import { ErrorBoundary } from '@/lib/error-boundary';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'Ruang Debat - Decentralized Debate Platform',
+  title: 'Debate Room - Decentralized Debate Platform',
   description: 'Create debate rooms, submit arguments, and have AI judges determine winners on the blockchain',
 };
 

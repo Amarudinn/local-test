@@ -41,8 +41,12 @@ export function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
             <MessageSquare className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl hidden sm:inline-block">Ruang Debat</span>
-            <span className="font-bold text-xl sm:hidden">RD</span>
+            <span className={cn("font-bold text-xl", isHomePage ? "inline-block" : "hidden sm:inline-block")}>
+              Debate Room
+            </span>
+            <span className={cn("font-bold text-xl sm:hidden", isHomePage && "hidden")}>
+              DR
+            </span>
           </Link>
 
           {/* Centered Desktop Menu (Home Only) */}

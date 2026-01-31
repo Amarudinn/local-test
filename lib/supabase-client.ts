@@ -57,7 +57,7 @@ async function withRetry<T>(
       operation,
       { maxAttempts: 1, delayMs: 1000, exponentialBackoff: false },
       (attempt, error) => {
-        console.log(`Retrying database operation (attempt ${attempt})...`);
+
       }
     );
   } catch (error) {
@@ -636,7 +636,7 @@ export const supabaseApi = {
 
       if (error) throw error;
 
-      console.log(`✅ Synced ${argumentsData.length} arguments to database for ${contractAddress}`);
+
     }, { operation: 'syncArguments', contractAddress, count: argumentsData.length });
   },
 
@@ -701,7 +701,7 @@ export const supabaseApi = {
 
       if (error) throw error;
 
-      console.log(`✅ Synced ${participantsData.length} participants to database for ${contractAddress}`);
+
     }, { operation: 'syncParticipants', contractAddress, count: participantsData.length });
   },
 
@@ -828,7 +828,7 @@ export const supabaseApi = {
 
       if (error) throw error;
 
-      console.log(`✅ Synced leaderboard (${results.all_scores.length} results) to database for ${contractAddress}`);
+
     }, { operation: 'syncLeaderboard', contractAddress, count: results.all_scores.length });
   },
 

@@ -9,7 +9,7 @@
  *   npm run deploy:contract -- --network mainnet
  */
 
-import { deployDebateContract, getDebateInfo } from '../lib/genlayer-client';
+import { deployDebateContract, getDebateInfo, getServerClient } from '../lib/genlayer-client';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -59,24 +59,30 @@ async function deployContract(network: string): Promise<void> {
     console.log('⚠️  WARNING: You are about to deploy to MAINNET!');
     console.log('⚠️  Make sure you have completed the security audit checklist.');
     console.log('⚠️  See CONTRACT_AUDIT_CHECKLIST.md for details.\n');
-    
+
     // In a real scenario, you'd want to add a confirmation prompt here
     // For now, we'll just log the warning
   }
 
   try {
+    // Initialize client
+    console.log('🔌 Connecting to GenLayer network...');
+    const client = await getServerClient();
+    console.log('✅ Connected successfully\n');
+
     // Deploy contract
     console.log('📝 Deploying contract with parameters:');
     console.log(`   Topic: ${TEST_DEBATE.topic}`);
     console.log(`   Description: ${TEST_DEBATE.description}`);
-    console.log(`   Duration: ${TEST_DEBATE.durationHours} hours\n`);
+    console.log(`   Duration: ${TEST_DEBATE.durationHours} hours (${TEST_DEBATE.durationHours * 60} minutes)\n`);
 
     console.log('⏳ Deploying... (this may take a few minutes)\n');
 
     const result = await deployDebateContract(
+      client,
       TEST_DEBATE.topic,
       TEST_DEBATE.description,
-      TEST_DEBATE.durationHours
+      TEST_DEBATE.durationHours * 60 // convert to minutes
     );
 
     console.log('✅ Contract deployed successfully!\n');
@@ -133,7 +139,7 @@ async function deployContract(network: string): Promise<void> {
   } catch (error) {
     console.error('❌ Deployment failed!\n');
     console.error('Error:', error);
-    
+
     if (error instanceof Error) {
       console.error('Message:', error.message);
       console.error('Stack:', error.stack);
@@ -153,7 +159,7 @@ async function deployContract(network: string): Promise<void> {
 // Parse command line arguments
 function parseArgs(): string {
   const args = process.argv.slice(2);
-  
+
   // Find --network argument
   const networkIndex = args.indexOf('--network');
   if (networkIndex === -1 || networkIndex === args.length - 1) {
@@ -168,7 +174,7 @@ function parseArgs(): string {
 // Main execution
 async function main() {
   console.log('╔════════════════════════════════════════════════════════╗');
-  console.log('║     Ruang Debat - Smart Contract Deployment Tool      ║');
+  console.log('║     Debate Room - Smart Contract Deployment Tool      ║');
   console.log('╚════════════════════════════════════════════════════════╝\n');
 
   const network = parseArgs();

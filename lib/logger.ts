@@ -1,5 +1,5 @@
 /**
- * Centralized logging utility for Ruang Debat platform
+ * Centralized logging utility for Debate Room platform
  * Handles error logging, performance monitoring, and user activity tracking
  */
 

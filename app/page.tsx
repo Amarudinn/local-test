@@ -5,6 +5,8 @@ import { LoginButton, UserProfile } from '@/components/auth';
 import { useAuth } from '@/lib/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 
+import { Navbar } from '@/components/ui/navbar';
+
 export const dynamic = 'force-dynamic';
 
 export default function Home() {
@@ -13,18 +15,8 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen flex-col">
-      {/* Header */}
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-3 md:py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold">Ruang Debat</h1>
-          </div>
-          <div className="flex items-center gap-2 md:gap-4">
-            {!isAuthenticated && <LoginButton />}
-            {isAuthenticated && <UserProfile />}
-          </div>
-        </div>
-      </header>
+      {/* Shared Navbar */}
+      <Navbar />
 
       {/* Hero Section */}
       <div className="flex-1 flex flex-col items-center justify-center p-4 md:p-6 lg:p-8">

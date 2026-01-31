@@ -49,7 +49,6 @@ export default function RoadmapPage() {
                                     <ul className="list-disc pl-5 text-sm space-y-1">
                                         <li>Smart Contract deployment per debate</li>
                                         <li>AI Jury evaluation (Logic, Evidence, etc.)</li>
-                                        <li>Sudo-mode backend analysis</li>
                                         <li>Transparent Leaderboard</li>
                                     </ul>
                                 </CardContent>
@@ -111,7 +110,6 @@ export default function RoadmapPage() {
                                     <ul className="list-disc pl-5 text-sm space-y-1">
                                         <li>Import arguments directly from X/Twitter threads</li>
                                         <li>Influencer vs Community debates</li>
-                                        <li>Real-time sentiment integration</li>
                                     </ul>
                                 </CardContent>
                             </Card>
@@ -135,7 +133,7 @@ export default function RoadmapPage() {
                                 </CardHeader>
                                 <CardContent className="text-muted-foreground">
                                     <p className="italic">
-                                        To Be Announced (TBA) — Focusing on scalability, DAO governance, and cross-chain interoperability.
+                                        To Be Announced (TBA) — Focusing on scalability.
                                     </p>
                                 </CardContent>
                             </Card>

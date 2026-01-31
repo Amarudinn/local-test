@@ -104,7 +104,7 @@ export default function DocsPage() {
                                         </div>
                                         <div>
                                             <h3 className="font-semibold">Active Debate</h3>
-                                            <p className="text-sm text-muted-foreground">Arguments are being accepted. Timer is running. Ends when time expires.</p>
+                                            <p className="text-sm text-muted-foreground">Arguments are being accepted. Ends when time expires.</p>
                                         </div>
                                     </div>
                                     <div className="flex gap-4 items-start border p-4 rounded-lg">

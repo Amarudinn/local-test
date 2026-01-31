@@ -35,7 +35,7 @@ export default function HowItWorksPage() {
         {
             id: 4,
             title: 'Win & Leaderboard',
-            description: 'The highest quality argument wins! Access detailed performance insights and climb the leaderboard.',
+            description: 'The highest quality argument wins! and climb the leaderboard.',
             icon: Trophy,
             color: 'text-yellow-500',
             bgColor: 'bg-yellow-50 dark:bg-yellow-950',

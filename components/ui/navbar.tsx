@@ -26,8 +26,14 @@ export function Navbar() {
     { href: '#', label: 'Docs', icon: FileText },
   ];
 
-  const isHomePage = pathname === '/';
+  // Normalize pathname to ensure robust homepage detection (e.g. handle trailing slashes)
+  const isHomePage = pathname === '/' || pathname === '/index';
+
+  // Desktop: Show full menu ONLY on Homepage
   const desktopItems = isHomePage ? [...navItems, ...homeOnlyItems] : navItems;
+
+  // Mobile: ALWAYS show full menu for better accessibility
+  const mobileItems = [...navItems, ...homeOnlyItems];
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -86,7 +92,7 @@ export function Navbar() {
         {/* Mobile Menu Dropdown */}
         {isMenuOpen && (
           <div className="md:hidden border-t py-4 px-2 space-y-2 bg-background absolute left-0 right-0 shadow-lg border-b animate-in slide-in-from-top-2">
-            {[...navItems, ...homeOnlyItems].map((item) => {
+            {mobileItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
               return (

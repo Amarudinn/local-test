@@ -99,6 +99,13 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
     staleTime: 60 * 60 * 1000, // Cache for 1 hour - criteria rarely changes
   });
 
+  // Fetch evaluation criteria weights from blockchain
+  const { data: criteriaWeights } = useQuery({
+    queryKey: ['criteria', contractAddress],
+    queryFn: () => getEvaluationCriteria(contractAddress),
+    enabled: !!contractAddress,
+  });
+
   // Fetch participants with hybrid approach (database cache + blockchain fallback)
   const { data: participants, isLoading: isLoadingParticipants } = useQuery<ParticipantInfo[]>({
     queryKey: ['participants', contractAddress],
@@ -1028,6 +1035,7 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
             <LeaderboardDisplay
               results={results}
               arguments={debateArguments || []}
+              criteriaWeights={criteriaWeights}
             />
           ) : (
             <Card>
@@ -1076,9 +1084,17 @@ interface LeaderboardDisplayProps {
     }>;
   };
   arguments: ArgumentInfo[];
+  criteriaWeights?: {
+    logic_reasoning: number;
+    evidence_facts: number;
+    clarity: number;
+    relevance: number;
+    originality: number;
+    persuasiveness: number;
+  };
 }
 
-function LeaderboardDisplay({ results, arguments: debateArguments }: LeaderboardDisplayProps) {
+function LeaderboardDisplay({ results, arguments: debateArguments, criteriaWeights }: LeaderboardDisplayProps) {
   // Ensure all_scores is an array
   if (!Array.isArray(results.all_scores)) {
     return (
@@ -1137,6 +1153,7 @@ function LeaderboardDisplay({ results, arguments: debateArguments }: Leaderboard
               reasoning={participant.reasoning}
               argument={participant.argument}
               breakdown={participant.breakdown}
+              criteriaWeights={criteriaWeights}
             />
           ))}
         </div>
@@ -1159,9 +1176,26 @@ interface LeaderboardItemProps {
     originality: number;
     persuasiveness: number;
   };
+  criteriaWeights?: {
+    logic_reasoning: number;
+    evidence_facts: number;
+    clarity: number;
+    relevance: number;
+    originality: number;
+    persuasiveness: number;
+  };
 }
 
-function LeaderboardItem({ rank, address, score, reasoning, argument, breakdown }: LeaderboardItemProps) {
+function LeaderboardItem({ rank, address, score, reasoning, argument, breakdown, criteriaWeights }: LeaderboardItemProps) {
+  // Use custom criteria weights or defaults
+  const weights = criteriaWeights || {
+    logic_reasoning: 25,
+    evidence_facts: 20,
+    clarity: 15,
+    relevance: 15,
+    originality: 15,
+    persuasiveness: 10,
+  };
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
@@ -1218,38 +1252,38 @@ function LeaderboardItem({ rank, address, score, reasoning, argument, breakdown 
                 <CriteriaBar
                   label="Logic & Reasoning"
                   score={breakdown.logic_reasoning}
-                  maxScore={25}
-                  percentage={25}
+                  maxScore={weights.logic_reasoning}
+                  percentage={weights.logic_reasoning}
                 />
                 <CriteriaBar
                   label="Evidence & Facts"
                   score={breakdown.evidence_facts}
-                  maxScore={20}
-                  percentage={20}
+                  maxScore={weights.evidence_facts}
+                  percentage={weights.evidence_facts}
                 />
                 <CriteriaBar
                   label="Clarity"
                   score={breakdown.clarity}
-                  maxScore={15}
-                  percentage={15}
+                  maxScore={weights.clarity}
+                  percentage={weights.clarity}
                 />
                 <CriteriaBar
                   label="Relevance"
                   score={breakdown.relevance}
-                  maxScore={15}
-                  percentage={15}
+                  maxScore={weights.relevance}
+                  percentage={weights.relevance}
                 />
                 <CriteriaBar
                   label="Originality"
                   score={breakdown.originality}
-                  maxScore={15}
-                  percentage={15}
+                  maxScore={weights.originality}
+                  percentage={weights.originality}
                 />
                 <CriteriaBar
                   label="Persuasiveness"
                   score={breakdown.persuasiveness}
-                  maxScore={10}
-                  percentage={10}
+                  maxScore={weights.persuasiveness}
+                  percentage={weights.persuasiveness}
                 />
               </div>
             </div>

@@ -99,6 +99,15 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
       : supabaseDebate.evaluation_criteria)
     : null;
 
+  // Debug Criteria
+  useEffect(() => {
+    if (supabaseDebate) {
+      console.log('🔍 DEBUG - Supabase Debate Data:', supabaseDebate);
+      console.log('🔍 DEBUG - Evaluation Criteria Raw:', supabaseDebate.evaluation_criteria);
+      console.log('🔍 DEBUG - Parsed criteriaWeights:', criteriaWeights);
+    }
+  }, [supabaseDebate, criteriaWeights]);
+
   // Fetch participants with hybrid approach (database cache + blockchain fallback)
   const { data: participants, isLoading: isLoadingParticipants } = useQuery<ParticipantInfo[]>({
     queryKey: ['participants', contractAddress],

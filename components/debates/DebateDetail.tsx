@@ -121,6 +121,7 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
       }
 
       // Fallback to blockchain (slow but accurate)
+      const blockchainParticipants = await getBlockchainParticipants(contractAddress);
 
 
       // Sync to database for next time (non-blocking)
@@ -155,6 +156,7 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
       }
 
       // Fallback to blockchain (slow but accurate)
+      const blockchainArguments = await getBlockchainArguments(contractAddress);
 
 
       // Sync to database for next time (non-blocking)

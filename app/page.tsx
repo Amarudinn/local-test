@@ -54,34 +54,18 @@ export default function Home() {
             )}
             {!isLoading && isAuthenticated && user && (
               <div className="space-y-4 px-2">
-                <p className="text-base md:text-lg font-medium text-green-600">
-                  ✓ You are authenticated!
-                </p>
-                <div className="text-xs md:text-sm text-muted-foreground space-y-1">
-                  {user.email && <p className="break-all">Email: {user.email}</p>}
-                  {user.walletAddress && (
-                    <p className="break-all">
-                      Wallet: {user.walletAddress.slice(0, 6)}...
-                      {user.walletAddress.slice(-4)}
-                    </p>
-                  )}
-                  {user.isEmbeddedWallet && (
-                    <p className="text-xs text-blue-600">
-                      (Using embedded wallet)
-                    </p>
-                  )}
-                </div>
+                {/* Content simplified: Auth details hidden as they are in Navbar */}
                 <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center mt-4">
-                  <Button 
-                    size="lg" 
+                  <Button
+                    size="lg"
                     onClick={() => router.push('/debates')}
                     variant="outline"
                     className="w-full sm:w-auto"
                   >
                     Browse Debates
                   </Button>
-                  <Button 
-                    size="lg" 
+                  <Button
+                    size="lg"
                     onClick={() => router.push('/debates/create')}
                     className="w-full sm:w-auto"
                   >
@@ -97,7 +81,7 @@ export default function Home() {
             <div className="p-4 md:p-6 border rounded-lg hover:shadow-md transition-shadow">
               <h3 className="text-base md:text-lg font-semibold mb-2">Create Debates</h3>
               <p className="text-xs md:text-sm text-muted-foreground">
-                Deploy smart contracts for your debate topics
+                Start a new debate on any topic with customizable rules
               </p>
             </div>
             <div className="p-4 md:p-6 border rounded-lg hover:shadow-md transition-shadow">
@@ -119,7 +103,7 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t py-4 md:py-6">
         <div className="container mx-auto px-4 text-center text-xs md:text-sm text-muted-foreground">
-          <p>Powered by GenLayer Blockchain • Built with Next.js 15</p>
+          <p>Powered by GenLayer</p>
         </div>
       </footer>
     </main>

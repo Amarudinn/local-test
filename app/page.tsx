@@ -25,7 +25,7 @@ export default function Home() {
             Welcome to Ruang Debat
           </h2>
           <p className="text-base md:text-lg lg:text-xl text-muted-foreground px-2">
-            A decentralized debate platform powered by GenLayer blockchain
+            A decentralized debate platform powered by GenLayer
           </p>
           <p className="text-sm md:text-base lg:text-lg text-muted-foreground px-2">
             Create debate rooms, submit arguments, and have AI judges determine winners

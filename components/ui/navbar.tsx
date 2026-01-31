@@ -29,15 +29,14 @@ export function Navbar() {
   // Normalize pathname to ensure robust homepage detection (e.g. handle trailing slashes)
   const isHomePage = pathname === '/' || pathname === '/index';
 
-  // Desktop: Show full menu ONLY on Homepage
-  const desktopItems = isHomePage ? [...navItems, ...homeOnlyItems] : navItems;
+  // Desktop: Show standard links EXCEPT on Homepage
+  const showDesktopStandardLinks = !isHomePage;
 
-  // Mobile: ALWAYS show full menu for better accessibility
   const mobileItems = [...navItems, ...homeOnlyItems];
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 relative">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
@@ -46,31 +45,52 @@ export function Navbar() {
             <span className="font-bold text-xl sm:hidden">RD</span>
           </Link>
 
-          {/* Right Side Actions */}
-          <div className="flex items-center gap-2">
-
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-1">
-              {desktopItems.map((item) => {
+          {/* Centered Desktop Menu (Home Only) */}
+          {isHomePage && (
+            <div className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
+              {homeOnlyItems.map((item) => {
                 const Icon = item.icon;
-                const isActive = pathname === item.href;
                 return (
-                  <Button
+                  <Link
                     key={item.label}
-                    variant={isActive ? 'default' : 'ghost'}
-                    size="sm"
-                    onClick={() => router.push(item.href)}
-                    className={cn(
-                      'gap-2',
-                      isActive && 'bg-primary text-primary-foreground'
-                    )}
+                    href={item.href}
+                    className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-2"
                   >
                     <Icon className="h-4 w-4" />
-                    <span>{item.label}</span>
-                  </Button>
+                    {item.label}
+                  </Link>
                 );
               })}
             </div>
+          )}
+
+          {/* Right Side Actions */}
+          <div className="flex items-center gap-2">
+
+            {/* Desktop Navigation (Non-Home Only) */}
+            {showDesktopStandardLinks && (
+              <div className="hidden md:flex items-center space-x-1">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = pathname === item.href;
+                  return (
+                    <Button
+                      key={item.label}
+                      variant={isActive ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => router.push(item.href)}
+                      className={cn(
+                        'gap-2',
+                        isActive && 'bg-primary text-primary-foreground'
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </Button>
+                  );
+                })}
+              </div>
+            )}
 
             {/* Mobile Hamburger Button */}
             <Button

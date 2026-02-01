@@ -16,7 +16,7 @@ export default function RoadmapPage() {
                     <div className="space-y-2 text-center md:text-left">
                         <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Roadmap</h1>
                         <p className="text-muted-foreground text-lg">
-                            The future of the Debate Room protocol.
+                            The future of the Debate Room.
                         </p>
                     </div>
 

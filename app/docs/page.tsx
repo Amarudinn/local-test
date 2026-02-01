@@ -17,7 +17,7 @@ export default function DocsPage() {
                     <div className="space-y-2">
                         <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Documentation</h1>
                         <p className="text-muted-foreground text-lg">
-                            Technical guide and architectural overview of the Debate Room protocol.
+                            Technical guide and architectural overview of the Debate Room.
                         </p>
                     </div>
 

@@ -22,23 +22,23 @@ export default function RoadmapPage() {
 
                     <div className="grid gap-8 relative px-4 border-l-2 border-border ml-4 md:ml-0 md:px-0 md:border-l-0">
 
-                        {/* Phase 1: Current */}
+                        {/* Phase 1: Classic Debate (Completed) */}
                         <div className="relative md:flex md:gap-8 items-start group">
                             {/* Timeline Dot (Desktop) */}
-                            <div className="hidden md:flex flex-shrink-0 w-8 h-8 rounded-full bg-primary items-center justify-center mt-1 z-10 relative">
-                                <div className="w-3 h-3 bg-background rounded-full" />
+                            <div className="hidden md:flex flex-shrink-0 w-8 h-8 rounded-full bg-muted border-2 border-green-500 items-center justify-center mt-1 z-10 relative">
+                                <div className="w-3 h-3 bg-green-500 rounded-full" />
                             </div>
                             {/* Timeline Line (Desktop) */}
                             <div className="hidden md:block absolute left-4 top-9 bottom-[-32px] w-0.5 bg-border -z-10 group-last:hidden" />
 
-                            <Card className="flex-1 border-primary/20 bg-primary/5">
+                            <Card className="flex-1 border-green-500/20 bg-green-500/5">
                                 <CardHeader>
                                     <div className="flex items-center justify-between">
                                         <CardTitle className="flex items-center gap-2">
-                                            <Map className="w-5 h-5 text-primary" />
+                                            <Map className="w-5 h-5 text-green-500" />
                                             Classic Debate
                                         </CardTitle>
-                                        <Badge>Live Now</Badge>
+                                        <Badge variant="outline" className="border-green-500 text-green-500">Completed</Badge>
                                     </div>
                                 </CardHeader>
                                 <CardContent className="text-muted-foreground space-y-2">
@@ -55,7 +55,36 @@ export default function RoadmapPage() {
                             </Card>
                         </div>
 
-                        {/* Phase 2: Q1-Q2 */}
+                        {/* Phase 2: Modern Debate (Live Now) */}
+                        <div className="relative md:flex md:gap-8 items-start group">
+                            <div className="hidden md:flex flex-shrink-0 w-8 h-8 rounded-full bg-primary items-center justify-center mt-1 z-10 relative">
+                                <div className="w-3 h-3 bg-background rounded-full" />
+                            </div>
+                            <div className="hidden md:block absolute left-4 top-9 bottom-[-32px] w-0.5 bg-border -z-10" />
+
+                            <Card className="flex-1 border-primary/20 bg-primary/5">
+                                <CardHeader>
+                                    <div className="flex items-center justify-between">
+                                        <CardTitle className="flex items-center gap-2">
+                                            <Twitter className="w-5 h-5 text-sky-500" />
+                                            Modern Debate
+                                        </CardTitle>
+                                        <Badge>Live Now</Badge>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="text-muted-foreground space-y-2">
+                                    <p>
+                                        Bringing Crypto Twitter (CT) chaos into a structured environment.
+                                    </p>
+                                    <ul className="list-disc pl-5 text-sm space-y-1">
+                                        <li>Import arguments directly from X/Twitter threads</li>
+                                        <li>Influencer vs Community debates</li>
+                                    </ul>
+                                </CardContent>
+                            </Card>
+                        </div>
+
+                        {/* Phase 3: Rewards System */}
                         <div className="relative md:flex md:gap-8 items-start group">
                             <div className="hidden md:flex flex-shrink-0 w-8 h-8 rounded-full bg-muted border-2 border-primary/50 items-center justify-center mt-1 z-10 relative">
                                 <div className="w-2 h-2 bg-primary/50 rounded-full" />
@@ -69,7 +98,7 @@ export default function RoadmapPage() {
                                             <Coins className="w-5 h-5 text-blue-500" />
                                             Rewards System
                                         </CardTitle>
-                                        <Badge variant="outline">Q1 - Q2 2026</Badge>
+                                        <Badge variant="outline">Q2 2026</Badge>
                                     </div>
                                 </CardHeader>
                                 <CardContent className="text-muted-foreground space-y-2">
@@ -81,35 +110,6 @@ export default function RoadmapPage() {
                                         <li>USDC Prize Pools</li>
                                         <li>Proportional Distribution based on AI Score</li>
                                         <li>Automatic Payouts upon resolution</li>
-                                    </ul>
-                                </CardContent>
-                            </Card>
-                        </div>
-
-                        {/* Phase 3: Q2 */}
-                        <div className="relative md:flex md:gap-8 items-start group">
-                            <div className="hidden md:flex flex-shrink-0 w-8 h-8 rounded-full bg-muted border-2 border-primary/50 items-center justify-center mt-1 z-10 relative">
-                                <div className="w-2 h-2 bg-primary/50 rounded-full" />
-                            </div>
-                            <div className="hidden md:block absolute left-4 top-9 bottom-[-32px] w-0.5 bg-border -z-10" />
-
-                            <Card className="flex-1">
-                                <CardHeader>
-                                    <div className="flex items-center justify-between">
-                                        <CardTitle className="flex items-center gap-2">
-                                            <Twitter className="w-5 h-5 text-sky-500" />
-                                            Modern Debate
-                                        </CardTitle>
-                                        <Badge variant="outline">Q2 2026</Badge>
-                                    </div>
-                                </CardHeader>
-                                <CardContent className="text-muted-foreground space-y-2">
-                                    <p>
-                                        Bringing Crypto Twitter (CT) chaos into a structured environment.
-                                    </p>
-                                    <ul className="list-disc pl-5 text-sm space-y-1">
-                                        <li>Import arguments directly from X/Twitter threads</li>
-                                        <li>Influencer vs Community debates</li>
                                     </ul>
                                 </CardContent>
                             </Card>

@@ -144,7 +144,7 @@ export default function DocsPage() {
                                             Debate Room utilizes a <strong>Hybrid Architecture</strong> to ensure both decentralized integrity and high-performance user experience.
                                         </p>
                                         <ul className="list-disc pl-5 space-y-2 text-sm md:text-base">
-                                            <li><strong>Frontend:</strong> Next.js 14 (App Router) for responsive UI.</li>
+                                            <li><strong>Frontend:</strong> Next.js 15 (App Router) for responsive UI.</li>
                                             <li><strong>Blockchain:</strong> GenLayer (Intelligent Contracts) for logic and AI execution.</li>
                                             <li><strong>Database:</strong> Supabase (PostgreSQL) for caching and fast data retrieval.</li>
                                             <li><strong>Sync Service:</strong> Automatic bi-directional syncing between Blockchain and Database.</li>

@@ -314,6 +314,9 @@ export const supabaseApi = {
           last_synced_at: debate.last_synced_at || null,
           // @ts-ignore - Local type definition issue
           image_url: (debate as any).image_url || null,
+          source_type: (debate as any).source_type || 'manual',
+          source_url: (debate as any).source_url || null,
+          source_content: (debate as any).source_content || null,
         })
         .select('*')
         .single();

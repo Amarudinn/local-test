@@ -72,22 +72,22 @@ export async function getDebateInfoEthers(contractAddress: string): Promise<{
   participant_count: number;
 }> {
   logger.debug(LogCategory.BLOCKCHAIN, 'Fetching debate info with ethers.js', { contractAddress });
-  
+
   try {
     // Encode function call
     const data = encodeFunctionCall(
       'function get_debate_info() view returns (tuple(string topic, string description, string creator, uint256 created_at, uint256 duration_seconds, uint256 end_time, string status, uint256 participant_count))'
     );
-    
+
     // Make eth_call
     const result = await ethCall(contractAddress, data);
-    
+
     // Decode result
     const decoded = decodeFunctionResult(
       'function get_debate_info() view returns (tuple(string topic, string description, string creator, uint256 created_at, uint256 duration_seconds, uint256 end_time, string status, uint256 participant_count))',
       result
     );
-    
+
     // Parse the result
     const info = decoded[0];
     return {
@@ -119,19 +119,19 @@ export async function getParticipantsEthers(contractAddress: string): Promise<Ar
   has_submitted: boolean;
 }>> {
   logger.debug(LogCategory.BLOCKCHAIN, 'Fetching participants with ethers.js', { contractAddress });
-  
+
   try {
     const data = encodeFunctionCall(
       'function get_participants() view returns (tuple(string addr, uint256 joined_at, bool has_submitted)[])'
     );
-    
+
     const result = await ethCall(contractAddress, data);
-    
+
     const decoded = decodeFunctionResult(
       'function get_participants() view returns (tuple(string addr, uint256 joined_at, bool has_submitted)[])',
       result
     );
-    
+
     return decoded[0].map((p: any) => ({
       address: p.addr || p[0],
       joined_at: Number(p.joined_at || p[1]),
@@ -156,19 +156,19 @@ export async function getArgumentsEthers(contractAddress: string): Promise<Array
   timestamp: number;
 }>> {
   logger.debug(LogCategory.BLOCKCHAIN, 'Fetching arguments with ethers.js', { contractAddress });
-  
+
   try {
     const data = encodeFunctionCall(
       'function get_arguments() view returns (tuple(string author, string content, uint256 timestamp)[])'
     );
-    
+
     const result = await ethCall(contractAddress, data);
-    
+
     const decoded = decodeFunctionResult(
       'function get_arguments() view returns (tuple(string author, string content, uint256 timestamp)[])',
       result
     );
-    
+
     return decoded[0].map((arg: any) => ({
       author: arg.author || arg[0],
       content: arg.content || arg[1],
@@ -197,19 +197,19 @@ export async function getResultsEthers(contractAddress: string): Promise<{
   }>;
 }> {
   logger.debug(LogCategory.BLOCKCHAIN, 'Fetching results with ethers.js', { contractAddress });
-  
+
   try {
     const data = encodeFunctionCall(
       'function get_results() view returns (tuple(string winner, uint256 winner_score, tuple(string addr, uint256 score, string reasoning)[] all_scores))'
     );
-    
+
     const result = await ethCall(contractAddress, data);
-    
+
     const decoded = decodeFunctionResult(
       'function get_results() view returns (tuple(string winner, uint256 winner_score, tuple(string addr, uint256 score, string reasoning)[] all_scores))',
       result
     );
-    
+
     const res = decoded[0];
     return {
       winner: res.winner || res[0],
@@ -226,11 +226,11 @@ export async function getResultsEthers(contractAddress: string): Promise<{
       'Failed to fetch results with ethers.js',
       error instanceof Error ? error : new Error(String(error))
     );
-    
+
     if (error instanceof Error && error.message.includes('not been resolved')) {
       throw new Error('Debate has not been resolved yet');
     }
-    
+
     throw new Error(`Failed to fetch results: ${error instanceof Error ? error.message : String(error)}`);
   }
 }
@@ -242,24 +242,24 @@ export async function hasUserJoinedEthers(
   contractAddress: string,
   userAddress: string
 ): Promise<boolean> {
-  logger.debug(LogCategory.BLOCKCHAIN, 'Checking if user joined with ethers.js', { 
+  logger.debug(LogCategory.BLOCKCHAIN, 'Checking if user joined with ethers.js', {
     contractAddress,
-    userAddress 
+    userAddress
   });
-  
+
   try {
     const data = encodeFunctionCall(
       'function has_user_joined(string user) view returns (bool)',
       [userAddress]
     );
-    
+
     const result = await ethCall(contractAddress, data);
-    
+
     const decoded = decodeFunctionResult(
       'function has_user_joined(string user) view returns (bool)',
       result
     );
-    
+
     return decoded[0];
   } catch (error) {
     logger.error(
@@ -276,21 +276,21 @@ export async function hasUserJoinedEthers(
  */
 export async function isDebateEndedEthers(contractAddress: string): Promise<boolean> {
   logger.debug(LogCategory.BLOCKCHAIN, 'Checking if debate ended with ethers.js', { contractAddress });
-  
+
   try {
     const currentTimestamp = Math.floor(Date.now() / 1000);
     const data = encodeFunctionCall(
       'function is_ended(uint256 current_timestamp) view returns (bool)',
       [currentTimestamp]
     );
-    
+
     const result = await ethCall(contractAddress, data);
-    
+
     const decoded = decodeFunctionResult(
       'function is_ended(uint256 current_timestamp) view returns (bool)',
       result
     );
-    
+
     return decoded[0];
   } catch (error) {
     logger.error(

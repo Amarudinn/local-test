@@ -70,7 +70,7 @@ export function useGenLayerSigner() {
         // Privy embedded wallets have walletClientType === 'privy'
         const embeddedWallet = wallets.find(w => w.walletClientType === 'privy');
         const primaryWallet = embeddedWallet || wallets[0]; // Fallback to first wallet if no embedded wallet
-        
+
         logger.info(LogCategory.BLOCKCHAIN, 'Setting up GenLayer client with Privy wallet (EIP-1193 Provider)', {
           metadata: {
             walletAddress: primaryWallet.address,
@@ -93,7 +93,7 @@ export function useGenLayerSigner() {
         // Get EIP-1193 provider from Privy embedded wallet
         // This is the standard Web3 provider interface - NO private key export needed!
         const provider = await primaryWallet.getEthereumProvider();
-        
+
         if (!provider) {
           throw new Error('Failed to get Ethereum provider from Privy wallet');
         }
@@ -107,7 +107,7 @@ export function useGenLayerSigner() {
 
         // Create GenLayer client with the provider and account address
         const endpoint = process.env.NEXT_PUBLIC_GENLAYER_RPC_URL || 'https://studio.genlayer.com/api';
-        
+
         globalClient = createClient({
           chain: studionet,
           endpoint,

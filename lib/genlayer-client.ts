@@ -124,8 +124,8 @@ export async function deployDebateContract(
   };
 
   // Client-side validation
-  if (!topic || topic.length === 0 || topic.length > 200) {
-    throw new Error("Topic must be between 1 and 200 characters");
+  if (!topic || topic.length === 0) {
+    throw new Error("Topic is required");
   }
 
   if (!description || description.length === 0 || description.length > 1000) {

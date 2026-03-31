@@ -1,0 +1,3 @@
+ALTER TABLE debates ADD COLUMN IF NOT EXISTS source_type TEXT DEFAULT 'manual';
+ALTER TABLE debates ADD COLUMN IF NOT EXISTS source_url TEXT;
+ALTER TABLE debates ADD COLUMN IF NOT EXISTS source_content TEXT;

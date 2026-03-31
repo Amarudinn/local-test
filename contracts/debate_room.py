@@ -176,8 +176,8 @@ class DebateRoom(gl.Contract):
             Exception: If validation fails
         """
         # Validate inputs
-        if len(topic) == 0 or len(topic) > 200:
-            raise Exception("Topic must be between 1 and 200 characters")
+        if len(topic) == 0:
+            raise Exception("Topic is required")
         
         if len(description) == 0 or len(description) > 1000:
             raise Exception("Description must be between 1 and 1000 characters")

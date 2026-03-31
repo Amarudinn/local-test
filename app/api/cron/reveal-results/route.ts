@@ -70,7 +70,49 @@ export async function GET(request: NextRequest) {
     try {
         // Get initialized Supabase client
         const client = getSupabase();
-        // Find debates that have ended but not yet resolved
+
+        // ================================================================
+        // STEP 1: Auto-transition ONGOING/OPEN → ENDED for expired debates
+        // This fixes the gap where no server-side process was updating
+        // the database status when a debate's time expired.
+        // ================================================================
+        const { data: expiredDebates, error: expiredError } = await client
+            .from('debates')
+            .select('id, contract_address, status')
+            .in('status', ['ONGOING', 'OPEN'])
+            .lt('end_time', now);
+
+        if (expiredError) {
+            logger.error(LogCategory.SYNC, 'Failed to fetch expired debates', 
+                new Error(expiredError.message));
+        } else if (expiredDebates && expiredDebates.length > 0) {
+            logger.info(LogCategory.SYNC, 'Found expired debates to transition to ENDED', {
+                metadata: { count: expiredDebates.length }
+            });
+
+            for (const debate of expiredDebates) {
+                const { error: updateError } = await client
+                    .from('debates')
+                    .update({ status: 'ENDED' })
+                    .eq('id', debate.id);
+
+                if (updateError) {
+                    logger.error(LogCategory.SYNC, 'Failed to update expired debate status',
+                        new Error(updateError.message),
+                        { metadata: { debateId: debate.id } }
+                    );
+                } else {
+                    logger.info(LogCategory.SYNC, 'Debate status auto-transitioned to ENDED', {
+                        contractAddress: debate.contract_address,
+                        metadata: { previousStatus: debate.status }
+                    });
+                }
+            }
+        }
+
+        // ================================================================
+        // STEP 2: Find all ENDED debates and process reveal
+        // ================================================================
         const { data: endedDebates, error: debatesError } = await client
             .from('debates')
             .select('id, contract_address, topic, participant_count')
@@ -83,11 +125,15 @@ export async function GET(request: NextRequest) {
 
         if (!endedDebates || endedDebates.length === 0) {
             logger.info(LogCategory.SYNC, 'No debates to reveal', {
-                metadata: { duration: Date.now() - startTime }
+                metadata: { 
+                    duration: Date.now() - startTime,
+                    expiredTransitioned: expiredDebates?.length || 0
+                }
             });
             return NextResponse.json({
                 success: true,
                 revealed: 0,
+                transitioned: expiredDebates?.length || 0,
                 message: 'No debates ready to reveal'
             });
         }
@@ -244,6 +290,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({
             success: true,
             ...results,
+            transitioned: expiredDebates?.length || 0,
             duration,
         });
 

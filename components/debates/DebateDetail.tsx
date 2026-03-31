@@ -27,7 +27,7 @@ import { logger, LogCategory } from '@/lib/logger';
 import type { DebateStatus } from '@/lib/types';
 import { VALIDATION } from '@/lib/types';
 import { formatDistanceToNow, format } from 'date-fns';
-import { Clock, Users, Calendar, User, AlertCircle, CheckCircle2, Loader2, Trophy, ChevronDown } from 'lucide-react';
+import { Clock, Users, User, AlertCircle, CheckCircle2, Loader2, Trophy, ChevronDown, ExternalLink } from 'lucide-react';
 import { AddressDisplay } from '@/components/ui/address-display';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { CountdownTimer } from '@/components/ui/countdown-timer';
@@ -48,6 +48,8 @@ interface DebateInfo {
   participant_count: number;
   max_participants?: number; // Optional for backward compatibility
   image_url?: string | null;
+  source_type?: string | null;
+  source_url?: string | null;
 }
 
 interface ParticipantInfo {
@@ -432,6 +434,8 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
           : (debateInfo.max_participants || 10),
         // @ts-ignore - Local type definition issue
         image_url: (supabaseDebate as any).image_url,
+        source_type: (supabaseDebate as any).source_type || null,
+        source_url: (supabaseDebate as any).source_url || null,
       };
     }
 
@@ -453,6 +457,8 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
           : 10,
         // @ts-ignore - Local type definition issue
         image_url: (supabaseDebate as any).image_url,
+        source_type: (supabaseDebate as any).source_type || null,
+        source_url: (supabaseDebate as any).source_url || null,
       };
     }
 
@@ -549,7 +555,7 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
         <CardHeader className="pb-3 md:pb-6">
           <div className="flex items-start justify-between gap-2">
             <div className="space-y-2 flex-1 min-w-0">
-              <CardTitle className="text-xl md:text-2xl lg:text-3xl break-words">{displayData.topic}</CardTitle>
+              <CardTitle className="text-base md:text-lg lg:text-xl break-words whitespace-pre-wrap">{displayData.topic}</CardTitle>
               <div className="flex items-center gap-2 flex-wrap">
                 <StatusBadge status={effectiveStatus} />
                 <Badge variant="outline" className="gap-1 text-xs md:text-sm">
@@ -571,9 +577,29 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
             <p className="text-xs md:text-sm text-muted-foreground whitespace-pre-wrap break-words">{displayData.description}</p>
           </div>
 
+          {/* Tweet source — below description */}
+          {displayData.source_type === 'tweet' && displayData.source_url && (() => {
+            const match = displayData.source_url!.match(/(?:twitter\.com|x\.com)\/(\w+)\/status/i);
+            const tweetUsername = match ? match[1] : null;
+            return (
+              <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
+                {tweetUsername && <span className="font-medium">@{tweetUsername}</span>}
+                <a
+                  href={displayData.source_url!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-blue-500 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  View original tweet
+                </a>
+              </div>
+            );
+          })()}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 pt-4 border-t">
             <div className="flex items-center gap-2 text-xs md:text-sm">
-              <Calendar className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+              <svg className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19,4H17V3a1,1,0,0,0-2,0V4H9V3A1,1,0,0,0,7,3V4H5A3,3,0,0,0,2,7V19a3,3,0,0,0,3,3H19a3,3,0,0,0,3-3V7A3,3,0,0,0,19,4Zm1,15a1,1,0,0,1-1,1H5a1,1,0,0,1-1-1V12H20Zm0-9H4V7A1,1,0,0,1,5,6H7V7A1,1,0,0,0,9,7V6h6V7a1,1,0,0,0,2,0V6h2a1,1,0,0,1,1,1Z"/></svg>
               <span className="text-muted-foreground flex-shrink-0">Created:</span>
               <span className="truncate">
                 {displayData.created_at && displayData.created_at > 0
@@ -590,7 +616,7 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
             </div>
 
             <div className="flex items-center gap-2 text-xs md:text-sm">
-              <Calendar className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" />
+              <svg className="h-3 w-3 md:h-4 md:w-4 text-muted-foreground flex-shrink-0" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19,4H17V3a1,1,0,0,0-2,0V4H9V3A1,1,0,0,0,7,3V4H5A3,3,0,0,0,2,7V19a3,3,0,0,0,3,3H19a3,3,0,0,0,3-3V7A3,3,0,0,0,19,4Zm1,15a1,1,0,0,1-1,1H5a1,1,0,0,1-1-1V12H20Zm0-9H4V7A1,1,0,0,1,5,6H7V7A1,1,0,0,0,9,7V6h6V7a1,1,0,0,0,2,0V6h2a1,1,0,0,1,1,1Z"/></svg>
               <span className="text-muted-foreground flex-shrink-0">Ends:</span>
               <span className="truncate">
                 {displayData.end_time && displayData.end_time > 0
@@ -778,17 +804,6 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
               </>
             )}
 
-            {/* Success Message - Show after successful submission */}
-            {submitSuccess && userArgument && (
-              <Alert className="border-green-500 bg-green-50 dark:bg-green-950">
-                <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                <AlertDescription className="text-green-900 dark:text-green-100">
-                  <strong>Argument submitted successfully!</strong>
-                  <p className="mt-2 text-sm">Your argument has been recorded on the blockchain.</p>
-                </AlertDescription>
-              </Alert>
-            )}
-
             {/* User's Submitted Argument - Show when user has already joined */}
             {userHasJoined && isOpen && userArgument && (
               <Card className="border-green-500 bg-green-50 dark:bg-green-950">
@@ -856,9 +871,7 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
                     </>
                   ) : (
                     <>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
-                      </svg>
+                      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><path d="M446.025,92.206c-40.762-42.394-97.487-69.642-160.383-72.182c-15.791-0.638-29.114,11.648-29.752,27.433c-0.638,15.791,11.648,29.114,27.426,29.76c47.715,1.943,90.45,22.481,121.479,54.681c30.987,32.235,49.956,75.765,49.971,124.011c-0.015,49.481-19.977,94.011-52.383,126.474c-32.462,32.413-76.999,52.368-126.472,52.382c-49.474-0.015-94.025-19.97-126.474-52.382c-32.405-32.463-52.368-76.992-52.382-126.474c0-3.483,0.106-6.938,0.302-10.364l34.091,16.827c3.702,1.824,8.002,1.852,11.35,0.086c3.362-1.788,5.349-5.137,5.264-8.896l-3.362-149.834c-0.114-4.285-2.88-8.357-7.094-10.464c-4.242-2.071-9.166-1.809-12.613,0.738L4.008,182.45c-3.05,2.221-4.498,5.831-3.86,9.577c0.61,3.759,3.249,7.143,6.966,8.974l35.722,17.629c-1.937,12.166-3.018,24.602-3.018,37.279c-0.014,65.102,26.475,124.31,69.153,166.944C151.607,465.525,210.8,492.013,275.91,492c65.095,0.014,124.302-26.475,166.937-69.146c42.678-42.635,69.167-101.842,69.154-166.944C512.014,192.446,486.844,134.565,446.025,92.206z"/></svg>
                       Refresh
                     </>
                   )}
@@ -961,9 +974,7 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
                     </>
                   ) : (
                     <>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2" />
-                      </svg>
+                      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><path d="M446.025,92.206c-40.762-42.394-97.487-69.642-160.383-72.182c-15.791-0.638-29.114,11.648-29.752,27.433c-0.638,15.791,11.648,29.114,27.426,29.76c47.715,1.943,90.45,22.481,121.479,54.681c30.987,32.235,49.956,75.765,49.971,124.011c-0.015,49.481-19.977,94.011-52.383,126.474c-32.462,32.413-76.999,52.368-126.472,52.382c-49.474-0.015-94.025-19.97-126.474-52.382c-32.405-32.463-52.368-76.992-52.382-126.474c0-3.483,0.106-6.938,0.302-10.364l34.091,16.827c3.702,1.824,8.002,1.852,11.35,0.086c3.362-1.788,5.349-5.137,5.264-8.896l-3.362-149.834c-0.114-4.285-2.88-8.357-7.094-10.464c-4.242-2.071-9.166-1.809-12.613,0.738L4.008,182.45c-3.05,2.221-4.498,5.831-3.86,9.577c0.61,3.759,3.249,7.143,6.966,8.974l35.722,17.629c-1.937,12.166-3.018,24.602-3.018,37.279c-0.014,65.102,26.475,124.31,69.153,166.944C151.607,465.525,210.8,492.013,275.91,492c65.095,0.014,124.302-26.475,166.937-69.146c42.678-42.635,69.167-101.842,69.154-166.944C512.014,192.446,486.844,134.565,446.025,92.206z"/></svg>
                       Refresh
                     </>
                   )}

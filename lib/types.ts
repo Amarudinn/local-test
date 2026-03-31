@@ -8,6 +8,8 @@
 
 export type DebateStatus = 'OPEN' | 'ONGOING' | 'ENDED' | 'RESOLVED';
 
+export type DebateSourceType = 'manual' | 'tweet';
+
 export interface Debate {
   id: string;
   contract_address: string;
@@ -22,6 +24,9 @@ export interface Debate {
   last_synced_at: Date | null;
   updated_at: Date;
   image_url?: string | null;
+  source_type?: DebateSourceType; // 'manual' or 'tweet'
+  source_url?: string | null;     // Original tweet URL
+  source_content?: string | null; // Snapshot of tweet content
 }
 
 export interface Participant {

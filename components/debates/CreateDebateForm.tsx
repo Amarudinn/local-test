@@ -27,12 +27,13 @@ import {
   DEFAULT_MAX_PARTICIPANTS,
   DEFAULT_EVALUATION_CRITERIA,
   type CreateDebateFormData,
-  type EvaluationCriteria
+  type EvaluationCriteria,
+  type DebateSourceType
 } from '@/lib/types';
 import { Switch } from '@/components/ui/switch';
 import { logger, LogCategory } from '@/lib/logger';
 import { toast } from '@/lib/toast';
-import { Info } from 'lucide-react';
+import { Info, Link2 } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -61,6 +62,19 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
   const { authenticated, user } = usePrivy();
   const { ready: signerReady, client, walletAddress } = useGenLayerSigner();
 
+  // Source mode state
+  const [sourceMode, setSourceMode] = useState<DebateSourceType>('manual');
+  const [tweetUrl, setTweetUrl] = useState('');
+  const [isFetchingTweet, setIsFetchingTweet] = useState(false);
+  const [tweetData, setTweetData] = useState<{
+    id: string;
+    text: string;
+    author_name: string;
+    author_handle: string;
+    url: string;
+  } | null>(null);
+  const [tweetError, setTweetError] = useState<string | null>(null);
+
   // Form state
   const [formData, setFormData] = useState<CreateDebateFormData>({
     topic: '',
@@ -78,7 +92,7 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
 
   // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [errors, setErrors] = useState<Partial<Record<keyof CreateDebateFormData, string>>>({});
+  const [errors, setErrors] = useState<Partial<Record<keyof CreateDebateFormData, string>>>({})
   const [generalError, setGeneralError] = useState<string>('');
 
   // Image Upload state
@@ -86,6 +100,54 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+
+  /**
+   * Fetch tweet content from URL
+   */
+  const handleFetchTweet = async () => {
+    if (!tweetUrl.trim()) {
+      setTweetError('Please enter a tweet URL');
+      return;
+    }
+
+    // Validate URL format
+    if (!tweetUrl.match(/(?:twitter\.com|x\.com)\/\w+\/status\/\d+/i)) {
+      setTweetError('Invalid URL. Please use a valid Twitter/X post URL (e.g., https://x.com/user/status/123)');
+      return;
+    }
+
+    setIsFetchingTweet(true);
+    setTweetError(null);
+
+    try {
+      const response = await fetch('/api/fetch-tweet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: tweetUrl }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch tweet');
+      }
+
+      if (data.success && data.tweet) {
+        setTweetData(data.tweet);
+        // Auto-fill topic with tweet content
+        if (data.tweet.text) {
+          setFormData(prev => ({ ...prev, topic: data.tweet.text }));
+        }
+        if (data.warning) {
+          setTweetError(data.warning);
+        }
+      }
+    } catch (error) {
+      setTweetError(error instanceof Error ? error.message : 'Failed to fetch tweet');
+    } finally {
+      setIsFetchingTweet(false);
+    }
+  };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -118,12 +180,19 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
     const newErrors: Partial<Record<keyof CreateDebateFormData, string>> = {};
 
     // Validate topic
-    if (!formData.topic.trim()) {
-      newErrors.topic = 'Topic is required';
-    } else if (formData.topic.length < VALIDATION.TOPIC_MIN_LENGTH) {
-      newErrors.topic = `Topic must be at least ${VALIDATION.TOPIC_MIN_LENGTH} character`;
-    } else if (formData.topic.length > VALIDATION.TOPIC_MAX_LENGTH) {
-      newErrors.topic = `Topic must be ${VALIDATION.TOPIC_MAX_LENGTH} characters or less`;
+    if (sourceMode === 'tweet') {
+      // In tweet mode, topic must be auto-filled from fetched tweet
+      if (!formData.topic.trim()) {
+        newErrors.topic = 'Please fetch a tweet first';
+      }
+    } else {
+      if (!formData.topic.trim()) {
+        newErrors.topic = 'Topic is required';
+      } else if (formData.topic.length < VALIDATION.TOPIC_MIN_LENGTH) {
+        newErrors.topic = `Topic must be at least ${VALIDATION.TOPIC_MIN_LENGTH} character`;
+      } else if (formData.topic.length > VALIDATION.TOPIC_MAX_LENGTH) {
+        newErrors.topic = `Topic must be ${VALIDATION.TOPIC_MAX_LENGTH} characters or less`;
+      }
     }
 
     // Validate description
@@ -252,6 +321,9 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
             evaluation_criteria: finalCriteria as unknown as Record<string, number>,
             last_synced_at: null,
             image_url: finalImageUrl,
+            source_type: sourceMode,
+            source_url: sourceMode === 'tweet' ? (tweetData?.url || tweetUrl) : null,
+            source_content: sourceMode === 'tweet' ? (tweetData?.text || null) : null,
           } as any);
 
           syncSuccess = true;
@@ -394,29 +466,140 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
-            {/* Topic Field */}
+            {/* Source Mode Toggle */}
             <div className="space-y-2">
-              <Label htmlFor="topic" className="text-sm md:text-base">
-                Topic <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="topic"
-                placeholder="Enter debate topic..."
-                value={formData.topic}
-                onChange={(e) => handleChange('topic', e.target.value)}
-                disabled={isSubmitting}
-                className={`text-sm md:text-base ${errors.topic ? 'border-red-500' : ''}`}
-                maxLength={VALIDATION.TOPIC_MAX_LENGTH}
-              />
-              <div className="flex justify-between items-start gap-2 text-xs md:text-sm flex-wrap">
-                <span className={`flex-1 ${errors.topic ? 'text-red-500' : 'text-muted-foreground'}`}>
-                  {errors.topic || 'A clear, concise statement of the debate topic'}
-                </span>
-                <span className={`text-muted-foreground flex-shrink-0 ${topicCharCount > VALIDATION.TOPIC_MAX_LENGTH ? 'text-red-500' : ''}`}>
-                  {topicCharCount}/{VALIDATION.TOPIC_MAX_LENGTH}
-                </span>
+              <Label className="text-sm md:text-base">Debate Source</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSourceMode('manual');
+                    setTweetData(null);
+                    setTweetUrl('');
+                    setTweetError(null);
+                    setFormData(prev => ({ ...prev, topic: '' }));
+                  }}
+                  className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all text-sm font-medium ${
+                    sourceMode === 'manual'
+                      ? 'border-primary bg-primary/5 text-primary'
+                      : 'border-border hover:border-muted-foreground/50 text-muted-foreground'
+                  }`}
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 8.25V18C20 21 18.21 22 16 22H8C5.79 22 4 21 4 18V8.25C4 5 5.79 4.25 8 4.25C8 4.87 8.24997 5.43 8.65997 5.84C9.06997 6.25 9.63 6.5 10.25 6.5H13.75C14.99 6.5 16 5.49 16 4.25C18.21 4.25 20 5 20 8.25Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path d="M16 4.25C16 5.49 14.99 6.5 13.75 6.5H10.25C9.63 6.5 9.06997 6.25 8.65997 5.84C8.24997 5.43 8 4.87 8 4.25C8 3.01 9.01 2 10.25 2H13.75C14.37 2 14.93 2.25 15.34 2.66C15.75 3.07 16 3.63 16 4.25Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path opacity="0.4" d="M8 13H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/><path opacity="0.4" d="M8 17H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  Manual
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSourceMode('tweet');
+                    setFormData(prev => ({ ...prev, topic: '' }));
+                  }}
+                  className={`flex items-center justify-center gap-2 px-4 py-3 rounded-lg border-2 transition-all text-sm font-medium ${
+                    sourceMode === 'tweet'
+                      ? 'border-primary bg-primary/5 text-primary'
+                      : 'border-border hover:border-muted-foreground/50 text-muted-foreground'
+                  }`}
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 300 300.251" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" d="M178.57 127.15 290.27 0h-26.46l-97.03 110.38L89.34 0H0l117.13 166.93L0 300.25h26.46l102.4-116.59 81.8 116.59h89.34M36.01 19.54H76.66l187.13 262.13h-40.66"/></svg>
+                  From Tweet
+                </button>
               </div>
             </div>
+
+            {/* Tweet URL Input (Tweet mode only) */}
+            {sourceMode === 'tweet' && (
+              <div className="space-y-3">
+                <Label htmlFor="tweet-url" className="text-sm md:text-base">
+                  Tweet URL <span className="text-red-500">*</span>
+                </Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="tweet-url"
+                    placeholder="https://x.com/user/status/123456..."
+                    value={tweetUrl}
+                    onChange={(e) => {
+                      setTweetUrl(e.target.value);
+                      setTweetError(null);
+                    }}
+                    disabled={isSubmitting || isFetchingTweet}
+                    className={`flex-1 text-sm md:text-base ${tweetError ? 'border-red-500' : ''}`}
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleFetchTweet}
+                    disabled={isSubmitting || isFetchingTweet || !tweetUrl.trim()}
+                    className="flex-shrink-0"
+                  >
+                    {isFetchingTweet ? (
+                      <><Loader2 className="h-4 w-4 animate-spin mr-1" /> Fetching...</>
+                    ) : (
+                      <><Link2 className="h-4 w-4 mr-1" /> Fetch</>
+                    )}
+                  </Button>
+                </div>
+                {tweetError && (
+                  <p className="text-xs text-red-500">{tweetError}</p>
+                )}
+
+                {/* Tweet Preview */}
+                {tweetData && tweetData.text && (
+                  <div className="rounded-lg border bg-muted/30 p-4 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-bold">
+                        {tweetData.author_name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="text-sm font-semibold">{tweetData.author_name}</div>
+                        <div className="text-xs text-muted-foreground">{tweetData.author_handle}</div>
+                      </div>
+                    </div>
+                    <p className="text-sm whitespace-pre-wrap">{tweetData.text}</p>
+                    <a
+                      href={tweetData.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-500 hover:underline flex items-center gap-1"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Link2 className="h-3 w-3" />
+                      View original tweet
+                    </a>
+                  </div>
+                )}
+
+                {/* Show topic validation error in tweet mode */}
+                {errors.topic && (
+                  <p className="text-xs text-red-500">{errors.topic}</p>
+                )}
+              </div>
+            )}
+
+            {/* Topic Field - Only show in Manual mode */}
+            {sourceMode === 'manual' && (
+              <div className="space-y-2">
+                <Label htmlFor="topic" className="text-sm md:text-base">
+                  Topic <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="topic"
+                  placeholder="Enter debate topic..."
+                  value={formData.topic}
+                  onChange={(e) => handleChange('topic', e.target.value)}
+                  disabled={isSubmitting}
+                  className={`text-sm md:text-base ${errors.topic ? 'border-red-500' : ''}`}
+                  maxLength={VALIDATION.TOPIC_MAX_LENGTH}
+                />
+                <div className="flex justify-between items-start gap-2 text-xs md:text-sm flex-wrap">
+                  <span className={`flex-1 ${errors.topic ? 'text-red-500' : 'text-muted-foreground'}`}>
+                    {errors.topic || 'A clear, concise statement of the debate topic'}
+                  </span>
+                  <span className={`text-muted-foreground flex-shrink-0 ${topicCharCount > VALIDATION.TOPIC_MAX_LENGTH ? 'text-red-500' : ''}`}>
+                    {topicCharCount}/{VALIDATION.TOPIC_MAX_LENGTH}
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Cover Image Field (Optional) */}
             <div className="space-y-2">

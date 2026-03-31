@@ -145,7 +145,6 @@ deploy-test.py
 # Database & Migration Files (optional)
 # ============================================================================
 # Exclude entire supabase folder as requested
-/supabase
 
 # Uncomment if you want to exclude certain migration files
 # supabase/migrations/verify_schema.sql
@@ -169,3 +168,4 @@ deploy-test.py
 # Library Examples (optional - uncomment to exclude)
 # ============================================================================
 lib/examples/
+backup/

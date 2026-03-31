@@ -24,12 +24,7 @@ const NETWORKS: Record<string, DeploymentConfig> = {
     network: 'studio',
     rpcUrl: 'https://studio.genlayer.com/api',
     chainId: 61999,
-  },
-  mainnet: {
-    network: 'mainnet',
-    rpcUrl: process.env.MAINNET_RPC_URL || 'https://mainnet.genlayer.com/api',
-    chainId: parseInt(process.env.MAINNET_CHAIN_ID || '1'),
-  },
+  }
 };
 
 // Test debate parameters

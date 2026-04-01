@@ -84,9 +84,6 @@ scripts/generate-*.js
 deploy-test.py
 deployments/
 
-# Duplicate contract in public folder
-public/contracts/
-
 # Kiro specs
 .kiro/specs/
 

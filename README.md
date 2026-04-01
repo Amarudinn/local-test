@@ -202,8 +202,3 @@ debate-room/
 
 > *"Debate Room builds a future where every public discussion is judged by the strength of arguments, not the strength of authority. By combining Intelligent Contracts, Optimistic Democracy, and the Equivalence Principle from GenLayer Protocol, we create debate infrastructure that is fundamentally fair — where AI becomes the neutral judge, blockchain becomes the immutable witness, and decentralized consensus becomes the guarantee of justice."*
 
----
-
-<p align="center">
-  Built on <a href="https://genlayer.com">GenLayer Protocol</a> • Powered by Optimistic Democracy • Secured by the Equivalence Principle
-</p>

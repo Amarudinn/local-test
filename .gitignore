@@ -84,6 +84,9 @@ scripts/generate-*.js
 deploy-test.py
 deployments/
 
+# Supabase migrations (local dev only)
+supabase/migrations/
+
 # Kiro specs
 .kiro/specs/
 

@@ -19,10 +19,8 @@ export default function DebateDetailPage({ params }: DebateDetailPageProps) {
   const router = useRouter();
   const { contractAddress } = use(params);
 
-  // Validate contract address format
   const isValid = isValidAddress(contractAddress);
 
-  // Show 404 page for invalid addresses
   if (!isValid) {
     return (
       <>
@@ -89,7 +87,6 @@ export default function DebateDetailPage({ params }: DebateDetailPageProps) {
     <>
       <Navbar />
       <div className="container mx-auto py-8 px-4 max-w-5xl">
-      {/* Back button */}
       <div className="mb-6">
         <Button
           variant="ghost"
@@ -102,7 +99,6 @@ export default function DebateDetailPage({ params }: DebateDetailPageProps) {
         </Button>
       </div>
 
-      {/* Debate Detail Component */}
       <DebateDetail contractAddress={contractAddress} />
     </div>
     </>

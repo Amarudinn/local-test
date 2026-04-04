@@ -1,21 +1,8 @@
-/**
- * Background Job: Process Sync Queue
- * 
- * This API route processes pending sync operations from the sync_queue table.
- * It should be called periodically by a cron job (every 1-5 minutes).
- * 
- * Deployment Options:
- * 1. Vercel Cron Jobs (vercel.json)
- * 2. External cron service (EasyCron, cron-job.org)
- * 3. Manual trigger for testing
- */
-
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseApi } from '@/lib/supabase-client';
 import * as genlayerClient from '@/lib/genlayer-client';
 import { logger, LogCategory } from '@/lib/logger';
 
-// Verify cron secret to prevent unauthorized access
 function verifyCronSecret(request: NextRequest): boolean {
   const authHeader = request.headers.get('authorization');
   const cronSecret = process.env.CRON_SECRET || 'your-secret-key-here';
@@ -29,7 +16,6 @@ function verifyCronSecret(request: NextRequest): boolean {
 }
 
 export async function GET(request: NextRequest) {
-  // Verify authorization
   if (!verifyCronSecret(request)) {
     return NextResponse.json(
       { error: 'Unauthorized' },
@@ -43,7 +29,6 @@ export async function GET(request: NextRequest) {
   });
   
   try {
-    // Get pending sync operations (limit 10 per run)
     const pendingOps = await supabaseApi.getPendingSyncOperations(10);
     
     if (pendingOps.length === 0) {
@@ -68,21 +53,17 @@ export async function GET(request: NextRequest) {
       queued: 0,
     };
     
-    // Process each operation
     for (const op of pendingOps) {
       results.processed++;
       
       try {
-        // Mark as processing
         await supabaseApi.updateSyncQueueItem(op.id, {
           status: 'processing',
         });
         
-        // Process based on sync type
         if (op.sync_type === 'debate_creation') {
           await processDebateCreation(op);
           
-          // Mark as completed
           await supabaseApi.updateSyncQueueItem(op.id, {
             status: 'completed',
             completed_at: new Date(),
@@ -93,7 +74,6 @@ export async function GET(request: NextRequest) {
         } else if (op.sync_type === 'participant_join') {
           await processParticipantJoin(op);
           
-          // Mark as completed
           await supabaseApi.updateSyncQueueItem(op.id, {
             status: 'completed',
             completed_at: new Date(),
@@ -102,7 +82,6 @@ export async function GET(request: NextRequest) {
           results.succeeded++;
           
         } else {
-          // Other sync types not implemented yet
           logger.warn(LogCategory.SYNC, 'Unsupported sync type', {
             metadata: { syncType: op.sync_type, id: op.id }
           });
@@ -131,11 +110,9 @@ export async function GET(request: NextRequest) {
           }
         );
         
-        // Increment attempts
         const newAttempts = op.attempts + 1;
         
         if (newAttempts >= op.max_attempts) {
-          // Max attempts reached, mark as failed
           await supabaseApi.updateSyncQueueItem(op.id, {
             status: 'failed',
             attempts: newAttempts,
@@ -145,8 +122,7 @@ export async function GET(request: NextRequest) {
           results.failed++;
           
         } else {
-          // Retry later with exponential backoff
-          const delayMinutes = Math.pow(2, newAttempts); // 2, 4, 8, 16, 32 minutes
+          const delayMinutes = Math.pow(2, newAttempts);
           const nextRetryAt = new Date(Date.now() + delayMinutes * 60 * 1000);
           
           await supabaseApi.updateSyncQueueItem(op.id, {
@@ -191,9 +167,6 @@ export async function GET(request: NextRequest) {
   }
 }
 
-/**
- * Process debate creation sync operation
- */
 async function processDebateCreation(op: any): Promise<void> {
   const { contract_address, payload } = op;
   const { topic, description, durationMinutes, creatorId } = payload;
@@ -203,7 +176,6 @@ async function processDebateCreation(op: any): Promise<void> {
     metadata: { topic, attempt: op.attempts + 1 }
   });
   
-  // Check if already synced (idempotency)
   const existingDebate = await supabaseApi.getDebateByAddress(contract_address);
   if (existingDebate) {
     logger.info(LogCategory.SYNC, 'Debate already synced (from queue)', {
@@ -213,13 +185,10 @@ async function processDebateCreation(op: any): Promise<void> {
     return;
   }
   
-  // Fetch debate info from blockchain
   const debateInfo = await genlayerClient.getDebateInfo(contract_address);
   
-  // Calculate end_time as Date object
   const endTime = new Date(debateInfo.end_time * 1000);
   
-  // Create debate record in database
   await supabaseApi.createDebate({
     contract_address,
     topic,
@@ -237,9 +206,6 @@ async function processDebateCreation(op: any): Promise<void> {
   });
 }
 
-/**
- * Process participant join sync operation
- */
 async function processParticipantJoin(op: any): Promise<void> {
   const { contract_address, participant_address, payload } = op;
   const { argument, debate_id } = payload;
@@ -249,7 +215,6 @@ async function processParticipantJoin(op: any): Promise<void> {
     metadata: { participantAddress: participant_address, attempt: op.attempts + 1 }
   });
   
-  // Check if already synced (idempotency)
   const hasJoined = await supabaseApi.hasUserJoined(debate_id, participant_address);
   if (hasJoined) {
     logger.info(LogCategory.SYNC, 'Participant already synced (from queue)', {
@@ -259,7 +224,6 @@ async function processParticipantJoin(op: any): Promise<void> {
     return;
   }
   
-  // Fetch participant data from blockchain
   const participants = await genlayerClient.getParticipants(contract_address);
   const participantData = participants.find(
     p => p.address?.toLowerCase() === participant_address?.toLowerCase()
@@ -269,13 +233,11 @@ async function processParticipantJoin(op: any): Promise<void> {
     throw new Error(`Participant still not found on blockchain: ${participant_address}`);
   }
   
-  // Get debate info
   const debate = await supabaseApi.getDebateByAddress(contract_address);
   if (!debate) {
     throw new Error(`Debate not found: ${contract_address}`);
   }
   
-  // Create participant record
   const participant = await supabaseApi.createParticipant({
     debate_id: debate.id,
     contract_address: contract_address,
@@ -284,7 +246,6 @@ async function processParticipantJoin(op: any): Promise<void> {
     has_submitted: true,
   });
   
-  // Create argument record
   await supabaseApi.createArgument({
     debate_id: debate.id,
     contract_address: contract_address,
@@ -293,13 +254,11 @@ async function processParticipantJoin(op: any): Promise<void> {
     timestamp: participantData.joined_at,
   });
   
-  // Update participant count
   const newParticipantCount = debate.participant_count + 1;
   await supabaseApi.updateDebate(debate.id, {
     participant_count: newParticipantCount,
   });
   
-  // Update debate status if first participant
   if (debate.status === 'OPEN' && newParticipantCount === 1) {
     await supabaseApi.updateDebate(debate.id, {
       status: 'ONGOING',
@@ -315,7 +274,6 @@ async function processParticipantJoin(op: any): Promise<void> {
   });
 }
 
-// Allow POST for manual testing
 export async function POST(request: NextRequest) {
   return GET(request);
 }

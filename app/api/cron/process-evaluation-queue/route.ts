@@ -1,28 +1,11 @@
-/**
- * Cron Job: Process Evaluation Queue
- * 
- * Processes pending argument evaluations from the evaluation_queue table.
- * Uses GenLayer AI to evaluate each argument individually.
- * 
- * Flow:
- * 1. Fetch pending items from evaluation_queue (grouped by debate for fairness)
- * 2. For each item, call GenLayer evaluate_single_argument
- * 3. Save result to evaluations table (is_visible: false)
- * 4. Mark queue item as completed
- * 
- * Should be called every 1 minute by external cron service (cron-job.org)
- */
-
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import * as genlayerClient from '@/lib/genlayer-client';
 import { logger, LogCategory } from '@/lib/logger';
 
-// Vercel serverless function config - 5 minute timeout for GenLayer AI evaluation
-export const maxDuration = 300; // 5 minutes in seconds
+export const maxDuration = 300;
 export const dynamic = 'force-dynamic';
 
-// Lazy-initialize Supabase client (avoid build-time errors)
 let supabase: SupabaseClient | null = null;
 
 function getSupabase(): SupabaseClient {
@@ -39,7 +22,6 @@ function getSupabase(): SupabaseClient {
     return supabase;
 }
 
-// Verify cron secret to prevent unauthorized access
 function verifyCronSecret(request: NextRequest): boolean {
     const authHeader = request.headers.get('authorization');
     const cronSecret = process.env.CRON_SECRET || 'your-secret-key-here';
@@ -52,12 +34,10 @@ function verifyCronSecret(request: NextRequest): boolean {
     return token === cronSecret;
 }
 
-// Configuration
-const MAX_ITEMS_PER_RUN = 5;  // Process up to 5 items per cron run
-const MAX_ITEMS_PER_DEBATE = 2;  // Max 2 items per debate per run (fairness)
+const MAX_ITEMS_PER_RUN = 5;
+const MAX_ITEMS_PER_DEBATE = 2;
 
 export async function GET(request: NextRequest) {
-    // Verify authorization
     if (!verifyCronSecret(request)) {
         return NextResponse.json(
             { error: 'Unauthorized' },
@@ -71,17 +51,15 @@ export async function GET(request: NextRequest) {
     });
 
     try {
-        // Get initialized Supabase client
         const client = getSupabase();
 
-        // Get pending items grouped by debate (for fair processing)
         const { data: pendingItems, error: fetchError } = await client
             .from('evaluation_queue')
             .select('*')
             .eq('status', 'pending')
             .order('priority', { ascending: true })
             .order('created_at', { ascending: true })
-            .limit(MAX_ITEMS_PER_RUN * 2);  // Fetch extra to allow per-debate limiting
+            .limit(MAX_ITEMS_PER_RUN * 2);
 
         if (fetchError) {
             throw new Error(`Failed to fetch queue: ${fetchError.message}`);
@@ -98,7 +76,6 @@ export async function GET(request: NextRequest) {
             });
         }
 
-        // Group by debate and limit per debate for fairness
         const debateItemCount: Record<string, number> = {};
         const itemsToProcess: typeof pendingItems = [];
 
@@ -126,12 +103,10 @@ export async function GET(request: NextRequest) {
             failed: 0,
         };
 
-        // Process each item
         for (const item of itemsToProcess) {
             results.processed++;
 
             try {
-                // Mark as processing
                 await client
                     .from('evaluation_queue')
                     .update({
@@ -140,7 +115,6 @@ export async function GET(request: NextRequest) {
                     })
                     .eq('id', item.id);
 
-                // Call GenLayer AI to evaluate the argument
                 logger.info(LogCategory.SYNC, 'Evaluating argument with GenLayer AI', {
                     contractAddress: item.contract_address,
                     metadata: { participantAddress: item.participant_address }
@@ -152,7 +126,6 @@ export async function GET(request: NextRequest) {
                     item.argument_content
                 );
 
-                // Save evaluation result to database (hidden until debate ends)
                 const { error: insertError } = await client
                     .from('evaluations')
                     .upsert({
@@ -167,7 +140,7 @@ export async function GET(request: NextRequest) {
                         originality: evaluation.originality,
                         persuasiveness: evaluation.persuasiveness,
                         reasoning: evaluation.reasoning,
-                        is_visible: false,  // Hidden until debate ends
+                        is_visible: false,
                     }, {
                         onConflict: 'debate_id,participant_address'
                     });
@@ -176,7 +149,6 @@ export async function GET(request: NextRequest) {
                     throw new Error(`Failed to save evaluation: ${insertError.message}`);
                 }
 
-                // Mark queue item as completed
                 await client
                     .from('evaluation_queue')
                     .update({
@@ -210,7 +182,6 @@ export async function GET(request: NextRequest) {
                     }
                 );
 
-                // Increment attempts
                 const newAttempts = item.attempts + 1;
                 const newStatus = newAttempts >= item.max_attempts ? 'failed' : 'pending';
 
@@ -258,7 +229,6 @@ export async function GET(request: NextRequest) {
     }
 }
 
-// Allow POST for manual testing
 export async function POST(request: NextRequest) {
     return GET(request);
 }

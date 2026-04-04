@@ -1,4 +1,4 @@
-# v0.2.0
+# v0.1.0
 # { "Depends": "py-genlayer:latest" }
 
 from genlayer import *
@@ -21,9 +21,7 @@ def parse_llm_json_response(result: str, expected_key: str) -> any:
         Exception: If JSON parsing and regex extraction both fail
     """
     print("Response from LLM: ", result)
-    # Clean and parse the JSON result more robustly
     cleaned_result = result.strip()
-    # Remove markdown code blocks if present
     if cleaned_result.startswith("```json"):
         cleaned_result = cleaned_result[7:]
     if cleaned_result.startswith("```"):
@@ -43,7 +41,6 @@ def parse_llm_json_response(result: str, expected_key: str) -> any:
         print(f"JSON parsing error: {e}")
         print(f"Raw result: {result}")
         print(f"Cleaned result: {cleaned_result}")
-        # Fallback: try to extract just the value using regex
         if expected_key:
             pattern = rf'"{expected_key}"\s*:\s*"([^"]+)"'
             match = re.search(pattern, cleaned_result)
@@ -73,21 +70,21 @@ class Argument:
 @dataclass
 class ScoreBreakdown:
     """Detailed breakdown of scores for each evaluation criterion (6 criteria)"""
-    logic_reasoning: u8      # 0-25 points (25% weight)
-    evidence_facts: u8       # 0-20 points (20% weight)
-    clarity: u8              # 0-15 points (15% weight)
-    relevance: u8            # 0-15 points (15% weight)
-    originality: u8          # 0-15 points (15% weight)
-    persuasiveness: u8       # 0-10 points (10% weight)
+    logic_reasoning: u8
+    evidence_facts: u8
+    clarity: u8
+    relevance: u8
+    originality: u8
+    persuasiveness: u8
 
 @allow_storage
 @dataclass
 class ParticipantScore:
     """Represents the score and reasoning for a participant after AI judging"""
     address: Address
-    score: u8  # 0-100 (sum of all breakdown scores)
+    score: u8
     reasoning: str
-    breakdown: ScoreBreakdown  # Detailed score breakdown
+    breakdown: ScoreBreakdown
 
 @allow_storage
 @dataclass
@@ -102,9 +99,8 @@ class PendingEvaluation:
     originality: u8
     persuasiveness: u8
     reasoning: str
-    evaluated: bool  # Flag to check if evaluation exists
+    evaluated: bool
 
-# Contract class
 class DebateRoom(gl.Contract):
     """
     DebateRoom smart contract for decentralized debates with AI judging.
@@ -121,31 +117,25 @@ class DebateRoom(gl.Contract):
     4. View the leaderboard with scores and reasoning
     """
     
-    # Debate metadata
-    topic: str                                    # Debate title (max 200 chars)
-    description: str                              # Detailed explanation (max 1000 chars)
-    creator: Address                              # Address of debate creator
-    created_at: u64                               # Block timestamp of creation
-    duration_seconds: u64                         # Debate duration in seconds
-    end_time: u64                                 # Calculated end timestamp
-    status: str                                   # "OPEN", "ONGOING", "ENDED", "RESOLVED"
-    participant_count: u64                        # Number of participants (TreeMap doesn't have len())
-    max_participants: u64                         # Maximum number of participants allowed (default: 10)
+    topic: str
+    description: str
+    creator: Address
+    created_at: u64
+    duration_seconds: u64
+    end_time: u64
+    status: str
+    participant_count: u64
+    max_participants: u64
     
-    # Participants and arguments
-    participants: TreeMap[Address, Participant]   # Map of participant addresses to data
-    arguments: DynArray[Argument]                 # Ordered list of all arguments
+    participants: TreeMap[Address, Participant]
+    arguments: DynArray[Argument]
     
-    # Results (after resolution)
-    winner: Address                               # Winner address (after resolution)
-    winner_score: u8                              # Winner's score 0-100
-    all_scores: TreeMap[Address, ParticipantScore] # All participant scores
+    winner: Address
+    winner_score: u8
+    all_scores: TreeMap[Address, ParticipantScore]
     
-    # Pending evaluations (for real-time individual evaluation)
-    pending_evaluations: TreeMap[str, PendingEvaluation]  # Map of participant address (str) to evaluation
+    pending_evaluations: TreeMap[str, PendingEvaluation]
 
-    
-    # Evaluation criteria weights (must sum to 100)
     weight_logic_reasoning: u8
     weight_evidence_facts: u8
     weight_clarity: u8
@@ -175,7 +165,6 @@ class DebateRoom(gl.Contract):
         Raises:
             Exception: If validation fails
         """
-        # Validate inputs
         if len(topic) == 0:
             raise Exception("Topic is required")
         
@@ -185,23 +174,20 @@ class DebateRoom(gl.Contract):
         if duration_minutes <= 0:
             raise Exception("Duration must be a positive number")
         
-        # Validate criteria weights sum to 100
         total_weight = weight_logic_reasoning + weight_evidence_facts + weight_clarity + weight_relevance + weight_originality + weight_persuasiveness
         if total_weight != 100:
             raise Exception(f"Evaluation criteria weights must sum to 100, got {total_weight}")
         
-        # Initialize metadata (timestamps will be set when first participant joins)
         self.topic = topic
         self.description = description
         self.creator = gl.message.sender_address
-        self.created_at = u64(0)  # Will be set on first participant
-        self.duration_seconds = u64(duration_minutes * 60)  # Convert minutes to seconds
-        self.end_time = u64(0)  # Will be calculated on first participant
+        self.created_at = u64(0)
+        self.duration_seconds = u64(duration_minutes * 60)
+        self.end_time = u64(0)
         self.status = "OPEN"
         self.participant_count = u64(0)
-        self.max_participants = u64(max_participants)  # 0 = unlimited
+        self.max_participants = u64(max_participants)
         
-        # Store evaluation criteria weights
         self.weight_logic_reasoning = u8(weight_logic_reasoning)
         self.weight_evidence_facts = u8(weight_evidence_facts)
         self.weight_clarity = u8(weight_clarity)
@@ -209,11 +195,6 @@ class DebateRoom(gl.Contract):
         self.weight_originality = u8(weight_originality)
         self.weight_persuasiveness = u8(weight_persuasiveness)
         
-        # Note: TreeMap and DynArray are auto-initialized by GenLayer
-        # No need to call TreeMap() or DynArray() - they're already initialized from type annotations
-        
-        # Initialize result fields (will be set after resolution)
-        # Use Address constructor directly with hex string (no from_hex method)
         self.winner = Address("0x0000000000000000000000000000000000000000")
         self.winner_score = u8(0)
 
@@ -232,41 +213,33 @@ class DebateRoom(gl.Contract):
         """
         sender = gl.message.sender_address
         
-        # Validate user hasn't already joined
         if sender in self.participants:
             raise Exception("You have already submitted an argument to this debate")
         
-        # Check if debate is full (skip if unlimited - max_participants == 0)
         if self.max_participants > u64(0) and self.participant_count >= self.max_participants:
             raise Exception(f"This debate is full. Maximum {int(self.max_participants)} participants allowed")
         
-        # Validate argument length
         if len(argument) == 0 or len(argument) > 500:
             raise Exception("Argument must be between 1 and 500 characters")
         
-        # Set timestamps on first participant (if not set yet)
         if self.created_at == u64(0):
             timestamp_u64 = u64(current_timestamp)
             self.created_at = timestamp_u64
             self.end_time = self.created_at + self.duration_seconds
         
-        # Check if debate has ended based on time
         current_time_u64 = u64(current_timestamp)
         if current_time_u64 >= self.end_time:
             raise Exception("This debate has ended and is no longer accepting arguments")
         
-        # Validate debate status (must be OPEN or ONGOING)
         if self.status == "ENDED":
             raise Exception("This debate has ended and is no longer accepting arguments")
         
         if self.status == "RESOLVED":
             raise Exception("This debate has been resolved and is no longer accepting arguments")
         
-        # Change status to ONGOING on first participant
         if self.status == "OPEN":
             self.status = "ONGOING"
         
-        # Add participant
         timestamp_u64 = u64(current_timestamp)
         participant = Participant(
             address=sender,
@@ -276,7 +249,6 @@ class DebateRoom(gl.Contract):
         self.participants[sender] = participant
         self.participant_count = self.participant_count + u64(1)  # Increment count
         
-        # Add argument
         arg = Argument(
             author=sender,
             content=argument,
@@ -298,7 +270,6 @@ class DebateRoom(gl.Contract):
         Returns:
             Dictionary with scores and reasoning
         """
-        # Create AI evaluation prompt for single argument with dynamic weights
         task = f"""
 SYSTEM:
 You are an Argument Evaluator. Evaluate this single argument based on the debate topic.
@@ -335,7 +306,7 @@ EVALUATE:
         
         def leader_fn():
             result = gl.nondet.exec_prompt(task)
-            parsed = parse_llm_json_response(result, None)  # Get full dict
+            parsed = parse_llm_json_response(result, None)
             return parsed
         
         def validator_fn(leader_result: gl.vm.Result) -> bool:
@@ -345,7 +316,6 @@ EVALUATE:
             
             leader_data = leader_result.calldata
             
-            # Calculate total scores
             leader_total = (
                 int(leader_data["logic_reasoning"]) +
                 int(leader_data["evidence_facts"]) +
@@ -363,7 +333,6 @@ EVALUATE:
                 int(validator_result["persuasiveness"])
             )
             
-            # Allow 15 point difference for consensus
             if abs(leader_total - validator_total) > 15:
                 return False
             
@@ -373,7 +342,6 @@ EVALUATE:
         
         print(f"AI Evaluation Result for {participant_address}:", result)
         
-        # Calculate total score
         total_score = (
             int(result["logic_reasoning"]) +
             int(result["evidence_facts"]) +
@@ -383,7 +351,6 @@ EVALUATE:
             int(result["persuasiveness"])
         )
         
-        # Create and store the evaluation in storage
         evaluation = PendingEvaluation(
             participant_address=participant_address,
             total_score=u8(total_score),
@@ -397,12 +364,10 @@ EVALUATE:
             evaluated=True
         )
         
-        # Store in pending_evaluations TreeMap
         self.pending_evaluations[participant_address] = evaluation
         
         print(f"Stored evaluation for {participant_address}: score={total_score}")
         
-        # Return success indicator (actual data retrieved via get_pending_evaluation)
         return {
             "success": True,
             "participant_address": participant_address
@@ -421,7 +386,6 @@ EVALUATE:
         Returns:
             Dictionary with evaluation scores or empty dict if not found
         """
-        # Check if evaluation exists for this participant
         if participant_address not in self.pending_evaluations:
             return {
                 "found": False,
@@ -481,23 +445,19 @@ EVALUATE:
             evaluations: List of evaluation dictionaries with scores
             current_timestamp: Current Unix timestamp in seconds
         """
-        # Validate debate has ended
         current_time_u64 = u64(current_timestamp)
         if current_time_u64 < self.end_time:
             raise Exception("Debate has not ended yet")
         
-        # Validate not already resolved
         if self.status == "RESOLVED":
             raise Exception("Debate has already been resolved")
         
-        # Process each evaluation and store scores
         winner_address = None
         winner_score_value = 0
         
         for eval_data in evaluations:
             addr = Address(eval_data["participant_address"])
             
-            # Extract scores
             logic = u8(int(eval_data["logic_reasoning"]))
             evidence = u8(int(eval_data["evidence_facts"]))
             clarity = u8(int(eval_data["clarity"]))
@@ -508,7 +468,6 @@ EVALUATE:
             total_score = u8(int(eval_data["total_score"]))
             reasoning = eval_data["reasoning"]
             
-            # Create breakdown object
             breakdown = ScoreBreakdown(
                 logic_reasoning=logic,
                 evidence_facts=evidence,
@@ -518,7 +477,6 @@ EVALUATE:
                 persuasiveness=persuasiveness
             )
             
-            # Store score
             participant_score = ParticipantScore(
                 address=addr,
                 score=total_score,
@@ -527,17 +485,14 @@ EVALUATE:
             )
             self.all_scores[addr] = participant_score
             
-            # Track winner (highest score)
             if total_score > winner_score_value:
                 winner_score_value = total_score
                 winner_address = addr
         
-        # Set winner
         if winner_address is not None:
             self.winner = winner_address
             self.winner_score = u8(winner_score_value)
         
-        # Update status
         self.status = "RESOLVED"
 
     
@@ -609,7 +564,6 @@ EVALUATE:
         if self.status != "RESOLVED":
             raise Exception("Debate has not been resolved yet")
         
-        # Build leaderboard
         scores_list = []
         for addr, score_data in self.all_scores.items():
             scores_list.append({
@@ -626,7 +580,6 @@ EVALUATE:
                 }
             })
         
-        # Sort by score descending
         scores_list.sort(key=lambda x: x["score"], reverse=True)
         
         return {

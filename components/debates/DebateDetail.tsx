@@ -46,7 +46,7 @@ interface DebateInfo {
   end_time: number;
   status: DebateStatus;
   participant_count: number;
-  max_participants?: number; // Optional for backward compatibility
+  max_participants?: number;
   image_url?: string | null;
   source_type?: string | null;
   source_url?: string | null;
@@ -70,44 +70,36 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
   const userAddress = walletAddress;
   const queryClient = useQueryClient();
 
-  // Form state for argument submission
   const [argument, setArgument] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
-  // State for resolve debate
   const [resolveError, setResolveError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>('arguments');
 
-  // State for manual refresh
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Fetch debate info from blockchain
   const { data: debateInfo, isLoading: isLoadingDebate, error: debateError } = useQuery<DebateInfo>({
     queryKey: ['debate', contractAddress],
     queryFn: () => getDebateInfo(contractAddress),
-    refetchInterval: 30000, // Refetch every 30 seconds to update status
+    refetchInterval: 30000,
   });
 
-  // Fetch debate from Supabase for faster initial load
   const { data: supabaseDebate, isLoading: isLoadingSupabase } = useQuery({
     queryKey: ['debate-supabase', contractAddress],
     queryFn: () => supabaseApi.getDebateByAddress(contractAddress),
   });
 
-  // Parse evaluation criteria from database (faster than blockchain)
   const criteriaWeights = supabaseDebate?.evaluation_criteria
     ? (typeof supabaseDebate.evaluation_criteria === 'string'
       ? JSON.parse(supabaseDebate.evaluation_criteria)
       : supabaseDebate.evaluation_criteria)
     : null;
 
-  // Fetch participants with hybrid approach (database cache + blockchain fallback)
   const { data: participants, isLoading: isLoadingParticipants } = useQuery<ParticipantInfo[]>({
     queryKey: ['participants', contractAddress],
     queryFn: async () => {
-      // Try database first (fast)
       try {
         const dbParticipants = await supabaseApi.getParticipantsByContractAddress(contractAddress);
         if (dbParticipants && dbParticipants.length > 0) {
@@ -122,11 +114,8 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
         console.warn('Database fetch failed, falling back to blockchain:', error);
       }
 
-      // Fallback to blockchain (slow but accurate)
       const blockchainParticipants = await getBlockchainParticipants(contractAddress);
 
-
-      // Sync to database for next time (non-blocking)
       if (blockchainParticipants.length > 0) {
         import('@/lib/sync-service').then(({ syncParticipantsToDatabase }) => {
           syncParticipantsToDatabase(contractAddress, blockchainParticipants).catch(console.error);
@@ -138,11 +127,9 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
     enabled: !!debateInfo,
   });
 
-  // Fetch arguments with hybrid approach (database cache + blockchain fallback)
   const { data: debateArguments, isLoading: isLoadingArguments } = useQuery<ArgumentInfo[]>({
     queryKey: ['arguments', contractAddress],
     queryFn: async () => {
-      // Try database first (fast)
       try {
         const dbArguments = await supabaseApi.getArgumentsByContractAddress(contractAddress);
         if (dbArguments && dbArguments.length > 0) {
@@ -157,11 +144,8 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
         console.warn('Database fetch failed, falling back to blockchain:', error);
       }
 
-      // Fallback to blockchain (slow but accurate)
       const blockchainArguments = await getBlockchainArguments(contractAddress);
 
-
-      // Sync to database for next time (non-blocking)
       if (blockchainArguments.length > 0) {
         import('@/lib/sync-service').then(({ syncArgumentsToDatabase }) => {
           syncArgumentsToDatabase(contractAddress, blockchainArguments).catch(console.error);
@@ -173,7 +157,6 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
     enabled: !!debateInfo,
   });
 
-  // Fetch leaderboard results from database (blockchain is not updated during reveal)
   const { data: results, isLoading: isLoadingResults, error: resultsError } = useQuery<{
     winner: string;
     winner_score: number;
@@ -196,7 +179,6 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
 
 
       try {
-        // Fetch from database (leaderboard_results table)
         const dbResults = await supabaseApi.getLeaderboardByContractAddress(contractAddress);
 
 
@@ -211,21 +193,15 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
         throw error;
       }
     },
-    // Enable when supabase shows RESOLVED (blockchain may not be updated)
     enabled: supabaseDebate?.status === 'RESOLVED',
   });
 
-  // Debug logging for leaderboard state
-
-
-  // Check if current user has joined - use both blockchain and database
   const { data: userHasJoinedBlockchain } = useQuery({
     queryKey: ['user-joined-blockchain', contractAddress, userAddress],
     queryFn: () => hasUserJoined(contractAddress, userAddress!),
     enabled: !!userAddress && !!debateInfo,
   });
 
-  // Also check from database (faster and more reliable for recent joins)
   const { data: userHasJoinedDatabase } = useQuery({
     queryKey: ['user-joined-database', contractAddress, userAddress],
     queryFn: async () => {
@@ -235,10 +211,8 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
     enabled: !!userAddress && !!supabaseDebate,
   });
 
-  // User has joined if EITHER blockchain OR database says so
   const userHasJoined = userHasJoinedBlockchain || userHasJoinedDatabase;
 
-  // Mutation for submitting argument
   const submitArgumentMutation = useMutation({
     mutationFn: async (argumentText: string) => {
       if (!userAddress) {
@@ -249,14 +223,11 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
         throw new Error('Wallet client not ready');
       }
 
-      // Call blockchain to join debate
       await joinDebateBlockchain(client, contractAddress, argumentText);
 
-      // Sync to database (non-blocking - don't fail if sync fails)
       try {
         await syncParticipantJoin(contractAddress, userAddress, argumentText);
       } catch (syncError) {
-        // Log the error but don't fail the mutation
         console.warn('Failed to sync participant join to database:', syncError);
         logger.warn(LogCategory.SYNC, 'Database sync failed (non-critical)', {
           contractAddress,
@@ -272,20 +243,17 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
       setSubmitError(null);
       setShowForm(false);
 
-      // Optimistic update: immediately set userHasJoined to true
       queryClient.setQueryData(['user-joined-blockchain', contractAddress, userAddress], true);
       queryClient.setQueryData(['user-joined-database', contractAddress, userAddress], true);
 
-      // Wait a bit for blockchain to update, then refetch
       setTimeout(() => {
-        // Refetch debate data to update UI
         queryClient.invalidateQueries({ queryKey: ['debate', contractAddress] });
         queryClient.invalidateQueries({ queryKey: ['participants', contractAddress] });
         queryClient.invalidateQueries({ queryKey: ['arguments', contractAddress] });
         queryClient.invalidateQueries({ queryKey: ['user-joined-blockchain', contractAddress, userAddress] });
         queryClient.invalidateQueries({ queryKey: ['user-joined-database', contractAddress, userAddress] });
         queryClient.invalidateQueries({ queryKey: ['debate-supabase', contractAddress] });
-      }, 2000); // Wait 2 seconds for blockchain to update
+      }, 2000);
     },
     onError: (error: Error) => {
       setSubmitError(error.message);
@@ -293,20 +261,16 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
     },
   });
 
-  // Mutation for resolving debate
   const resolveDebateMutation = useMutation({
     mutationFn: async () => {
       if (!client) {
         throw new Error('Wallet client not ready');
       }
 
-      // Call blockchain to resolve debate
       await resolveDebateBlockchain(client, contractAddress);
 
-      // Fetch results from blockchain
       const results = await getResults(contractAddress);
 
-      // Sync results to database
       await syncDebateResolution(contractAddress, results);
 
       return results;
@@ -314,12 +278,10 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
     onSuccess: () => {
       setResolveError(null);
 
-      // Refetch debate data to update UI
       queryClient.invalidateQueries({ queryKey: ['debate', contractAddress] });
       queryClient.invalidateQueries({ queryKey: ['debate-supabase', contractAddress] });
       queryClient.invalidateQueries({ queryKey: ['results', contractAddress] });
 
-      // Switch to leaderboard tab
       setActiveTab('leaderboard');
     },
     onError: (error: Error) => {
@@ -327,13 +289,11 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
     },
   });
 
-  // Handle argument submission
   const handleSubmitArgument = async () => {
-    // Reset states
+
     setSubmitError(null);
     setSubmitSuccess(false);
 
-    // Validate argument
     if (!argument || argument.trim().length === 0) {
       setSubmitError('Argument cannot be empty');
       return;
@@ -344,33 +304,22 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
       return;
     }
 
-    // Submit argument
     submitArgumentMutation.mutate(argument);
   };
 
-  // Handle resolve debate
   const handleResolveDebate = async () => {
     setResolveError(null);
     resolveDebateMutation.mutate();
   };
 
-  // Handle manual refresh from blockchain
   const handleRefreshFromBlockchain = async () => {
     setIsRefreshing(true);
 
     try {
-      // Force fetch from blockchain (bypass cache)
-
-
-      // Fetch participants from blockchain
       const blockchainParticipants = await getBlockchainParticipants(contractAddress);
 
-
-      // Fetch arguments from blockchain
       const blockchainArguments = await getBlockchainArguments(contractAddress);
 
-
-      // Sync to database
       if (blockchainParticipants.length > 0) {
         await import('@/lib/sync-service').then(({ syncParticipantsToDatabase }) => {
           return syncParticipantsToDatabase(contractAddress, blockchainParticipants);
@@ -385,7 +334,6 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
 
       }
 
-      // Invalidate queries to refetch from database
       queryClient.invalidateQueries({ queryKey: ['participants', contractAddress] });
       queryClient.invalidateQueries({ queryKey: ['arguments', contractAddress] });
       queryClient.invalidateQueries({ queryKey: ['debate', contractAddress] });
@@ -398,19 +346,12 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
     }
   };
 
-  // Get user's submitted argument if they've joined
   const userArgument = debateArguments?.find(
     arg => arg.author?.toLowerCase() === userAddress?.toLowerCase()
   );
 
-  // Use hybrid data: prefer blockchain when available, fallback to Supabase
-  // For OPEN debates, blockchain timestamps are 0, so we use Supabase timestamps
   const displayData = (() => {
-    // Case 1: Both blockchain and database data available (ideal)
     if (debateInfo && supabaseDebate) {
-      // CRITICAL FIX: Always use database duration_minutes for display
-      // Old contracts on blockchain may have incorrect duration_seconds (using hours instead of minutes)
-      // Database is the source of truth for duration since it's set correctly at creation time
       const duration_seconds = supabaseDebate.duration_minutes * 60;
 
 
@@ -418,29 +359,24 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
       return {
         topic: debateInfo.topic,
         description: debateInfo.description,
-        // Use Supabase timestamps if blockchain timestamps are 0 (debate still OPEN)
         created_at: debateInfo.created_at > 0
           ? debateInfo.created_at
           : new Date(supabaseDebate.created_at).getTime() / 1000,
-        duration_seconds: duration_seconds,  // ALWAYS use calculated value from database
+        duration_seconds: duration_seconds,
         end_time: debateInfo.end_time > 0
           ? debateInfo.end_time
           : new Date(supabaseDebate.end_time).getTime() / 1000,
-        // Prefer database status if it's RESOLVED (cron job updates database, not blockchain)
         status: supabaseDebate.status === 'RESOLVED' ? 'RESOLVED' : debateInfo.status,
         participant_count: debateInfo.participant_count,
         max_participants: supabaseDebate.max_participants !== undefined && supabaseDebate.max_participants !== null
           ? supabaseDebate.max_participants
           : (debateInfo.max_participants || 10),
-        // @ts-ignore - Local type definition issue
         image_url: (supabaseDebate as any).image_url,
         source_type: (supabaseDebate as any).source_type || null,
         source_url: (supabaseDebate as any).source_url || null,
       };
     }
 
-    // Case 2: Only Supabase data available (blockchain still loading or failed)
-    // This is common for newly created debates
     if (supabaseDebate) {
 
 
@@ -455,25 +391,21 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
         max_participants: supabaseDebate.max_participants !== undefined && supabaseDebate.max_participants !== null
           ? supabaseDebate.max_participants
           : 10,
-        // @ts-ignore - Local type definition issue
         image_url: (supabaseDebate as any).image_url,
         source_type: (supabaseDebate as any).source_type || null,
         source_url: (supabaseDebate as any).source_url || null,
       };
     }
 
-    // Case 3: Only blockchain data available (database query failed)
     if (debateInfo) {
 
 
       return debateInfo;
     }
 
-    // Case 4: No data available
     return null;
   })();
 
-  // Set initial tab based on debate status
   useEffect(() => {
     if (displayData?.status === 'RESOLVED') {
       setActiveTab('leaderboard');
@@ -522,23 +454,16 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
   const isEnded = status === 'ENDED';
   const isResolved = status === 'RESOLVED';
 
-  // Calculate time remaining - only if end_time is set
   const now = Date.now() / 1000;
   const timeRemaining = displayData.end_time > 0 ? displayData.end_time - now : 0;
 
-  // Check if time has expired (client-side check)
   const timeHasExpired = displayData.end_time > 0 && timeRemaining <= 0;
 
-  // hasEnded should check BOTH database status AND time expiration
-  // This allows showing "Resolve Debate" button even if database hasn't updated yet
   const hasEnded = isEnded || (status === 'ONGOING' && timeHasExpired);
 
-  // Compute effective status for display (considers time expiration)
-  // If time has expired but database still shows ONGOING, display as ENDED
   const effectiveStatus: DebateStatus =
     status === 'ONGOING' && timeHasExpired ? 'ENDED' : status;
 
-  // Check if debate is full
   const maxParticipants = displayData.max_participants !== undefined && displayData.max_participants !== null
     ? displayData.max_participants
     : 10;
@@ -549,7 +474,6 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
 
   return (
     <div className="space-y-4 md:space-y-6">
-      {/* Debate Header */}
       <Card className="overflow-hidden">
         <DebateCover topic={displayData.topic} imageUrl={displayData.image_url} className="h-48 md:h-64 w-full" priority />
         <CardHeader className="pb-3 md:pb-6">
@@ -577,7 +501,6 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
             <p className="text-xs md:text-sm text-muted-foreground whitespace-pre-wrap break-words">{displayData.description}</p>
           </div>
 
-          {/* Tweet source — below description */}
           {displayData.source_type === 'tweet' && displayData.source_url && (() => {
             const match = displayData.source_url!.match(/(?:twitter\.com|x\.com)\/(\w+)\/status/i);
             const tweetUsername = match ? match[1] : null;
@@ -627,7 +550,6 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
             </div>
           </div>
 
-          {/* Time Remaining / Ended Message */}
           {!hasEnded && !isResolved && (
             <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
               <div className="text-xs md:text-sm font-medium text-blue-900 dark:text-blue-100 flex items-center gap-2 flex-wrap">
@@ -644,9 +566,7 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
             </div>
           )}
 
-          {/* Action Buttons and Forms */}
           <div className="space-y-4 pt-2">
-            {/* Warning if debate is full */}
             {isFull && isOpen && !userHasJoined && (
               <Alert className="border-red-500 bg-red-50 dark:bg-red-950">
                 <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
@@ -657,17 +577,14 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
               </Alert>
             )}
 
-            {/* Join Debate Button - Show when user can join */}
             {showJoinButton && !showForm && !submitSuccess && (
               <Button size="lg" onClick={() => setShowForm(true)} className="w-full sm:w-auto">
                 Join Debate
               </Button>
             )}
 
-            {/* Join Debate Form - Show when user clicks Join Debate */}
             {showJoinButton && showForm && !submitSuccess && (
               <>
-                {/* AI Judge Evaluation Criteria */}
                 <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm md:text-base text-blue-900 dark:text-blue-100 flex items-center gap-2">
@@ -804,7 +721,6 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
               </>
             )}
 
-            {/* User's Submitted Argument - Show when user has already joined */}
             {userHasJoined && isOpen && userArgument && (
               <Card className="border-green-500 bg-green-50 dark:bg-green-950">
                 <CardHeader>
@@ -823,7 +739,6 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
               </Card>
             )}
 
-            {/* Auto-Resolve Info - Show when debate has ended but not yet resolved */}
             {displayData.status === 'ENDED' && (
               <Alert className="border-blue-500 bg-blue-50 dark:bg-blue-950">
                 <Loader2 className="h-4 w-4 animate-spin text-blue-600 dark:text-blue-400" />
@@ -837,7 +752,6 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
         </CardContent>
       </Card>
 
-      {/* Tabs for Arguments, Participants, Leaderboard */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3 h-auto">
           <TabsTrigger value="arguments" className="text-xs md:text-sm py-2">Arguments</TabsTrigger>
@@ -894,7 +808,6 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
                         key={index}
                         className="rounded-lg p-4 md:p-5 space-y-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800"
                       >
-                        {/* Header with participant info and timestamp */}
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                           <div className="flex items-center gap-2 flex-wrap">
                             <AddressDisplay address={arg.author || ''} showCopy={true} />
@@ -915,12 +828,10 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
                           </div>
                         </div>
 
-                        {/* Argument content */}
                         <div className="text-sm md:text-base leading-relaxed whitespace-pre-wrap break-words text-blue-900 dark:text-blue-100">
                           {arg.content}
                         </div>
 
-                        {/* Argument number badge */}
                         <div className="flex items-center justify-between pt-2 border-t border-border/50">
                           <span className="text-xs text-muted-foreground">
                             Argument #{index + 1}
@@ -1058,10 +969,6 @@ export function DebateDetail({ contractAddress }: DebateDetailProps) {
   );
 }
 
-// ============================================================================
-// Leaderboard Components
-// ============================================================================
-
 interface LeaderboardDisplayProps {
   results: {
     winner: string;
@@ -1092,7 +999,6 @@ interface LeaderboardDisplayProps {
 }
 
 function LeaderboardDisplay({ results, arguments: debateArguments, criteriaWeights }: LeaderboardDisplayProps) {
-  // Ensure all_scores is an array
   if (!Array.isArray(results.all_scores)) {
     return (
       <Card>
@@ -1112,7 +1018,6 @@ function LeaderboardDisplay({ results, arguments: debateArguments, criteriaWeigh
     );
   }
 
-  // Sort participants by score (highest first) and add rank
   const rankedParticipants = results.all_scores
     .map((score) => {
       const foundArgument = debateArguments.find(arg => arg.author?.toLowerCase() === score.address?.toLowerCase());
@@ -1184,7 +1089,6 @@ interface LeaderboardItemProps {
 }
 
 function LeaderboardItem({ rank, address, score, reasoning, argument, breakdown, criteriaWeights }: LeaderboardItemProps) {
-  // Use custom criteria weights or defaults
   const weights = criteriaWeights || {
     logic_reasoning: 25,
     evidence_facts: 20,
@@ -1197,22 +1101,18 @@ function LeaderboardItem({ rank, address, score, reasoning, argument, breakdown,
 
   return (
     <div className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950">
-      {/* Collapsed View - Always Visible */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
         className="w-full p-1.5 md:p-2 flex items-center justify-between hover:bg-blue-100 dark:hover:bg-blue-900 transition-colors gap-2"
       >
         <div className="flex items-center gap-1.5 flex-1 min-w-0">
-          {/* Rank Badge */}
           <Badge variant="outline" className="font-semibold text-xs shrink-0 border-blue-300 dark:border-blue-700 text-blue-900 dark:text-blue-100">
             #{rank}
           </Badge>
 
-          {/* Address with copy icon */}
           <AddressDisplay address={address} showCopy={true} />
         </div>
 
-        {/* Score and Dropdown Icon */}
         <div className="flex items-center gap-2 shrink-0">
           <div className="text-right">
             <span className="text-base md:text-lg font-bold text-blue-900 dark:text-blue-100">{score}</span>
@@ -1224,16 +1124,13 @@ function LeaderboardItem({ rank, address, score, reasoning, argument, breakdown,
         </div>
       </button>
 
-      {/* Expanded View - Details */}
       {isExpanded && (
         <div className="px-3 md:px-4 py-3 md:py-4 space-y-3 border-t border-blue-200 dark:border-blue-800">
-          {/* Star Rating */}
           <div>
             <div className="text-xs text-blue-700 dark:text-blue-300 mb-1.5">Rating</div>
             <StarRating score={score} showLabel />
           </div>
 
-          {/* Argument */}
           <div>
             <div className="text-xs text-blue-700 dark:text-blue-300 mb-1.5">Argument</div>
             <div className="text-xs md:text-sm bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100 p-3 rounded-md max-h-24 overflow-y-auto break-words">
@@ -1241,7 +1138,6 @@ function LeaderboardItem({ rank, address, score, reasoning, argument, breakdown,
             </div>
           </div>
 
-          {/* Score Breakdown - Detailed Criteria */}
           {breakdown && (
             <div>
               <div className="text-xs text-blue-700 dark:text-blue-300 mb-2">Score Breakdown</div>
@@ -1286,7 +1182,6 @@ function LeaderboardItem({ rank, address, score, reasoning, argument, breakdown,
             </div>
           )}
 
-          {/* AI Evaluation Summary */}
           <div>
             <div className="text-xs text-blue-700 dark:text-blue-300 mb-1.5">AI Evaluation Summary</div>
             <div className="text-xs md:text-sm bg-blue-100 dark:bg-blue-900 text-blue-900 dark:text-blue-100 p-3 rounded-md max-h-24 overflow-y-auto break-words">
@@ -1305,7 +1200,6 @@ interface StarRatingProps {
 }
 
 function StarRating({ score, showLabel = false }: StarRatingProps) {
-  // Calculate stars: floor(score/20) = 0-5 stars
   const starCount = Math.floor(score / 20);
   const stars = Array.from({ length: 5 }, (_, i) => i < starCount);
 
@@ -1336,10 +1230,8 @@ interface CriteriaBarProps {
 }
 
 function CriteriaBar({ label, score, maxScore, percentage }: CriteriaBarProps) {
-  // Calculate percentage for progress bar
   const progressPercentage = (score / maxScore) * 100;
 
-  // Determine color based on percentage achieved
   const getColor = (percent: number) => {
     if (percent >= 80) return 'bg-green-500';
     if (percent >= 60) return 'bg-blue-500';
@@ -1374,7 +1266,6 @@ interface ScoreProgressBarProps {
 }
 
 function ScoreProgressBar({ score }: ScoreProgressBarProps) {
-  // Determine color based on score
   const getColor = (score: number) => {
     if (score >= 80) return 'bg-green-500';
     if (score >= 50) return 'bg-yellow-500';
@@ -1399,10 +1290,6 @@ function ScoreProgressBar({ score }: ScoreProgressBarProps) {
     </div>
   );
 }
-
-// ============================================================================
-// Helper Functions
-// ============================================================================
 
 function DebateDetailSkeleton() {
   return (

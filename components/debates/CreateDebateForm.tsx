@@ -75,42 +75,33 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
   } | null>(null);
   const [tweetError, setTweetError] = useState<string | null>(null);
 
-  // Form state
   const [formData, setFormData] = useState<CreateDebateFormData>({
     topic: '',
     description: '',
-    duration: '24h', // Default to 24 hours
+    duration: '24h',
   });
 
-  // Custom participants state
   const [useCustomParticipants, setUseCustomParticipants] = useState(false);
   const [maxParticipants, setMaxParticipants] = useState(DEFAULT_MAX_PARTICIPANTS);
 
-  // Custom evaluation criteria state
   const [useCustomCriteria, setUseCustomCriteria] = useState(false);
   const [criteria, setCriteria] = useState<EvaluationCriteria>({ ...DEFAULT_EVALUATION_CRITERIA });
 
-  // UI state
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof CreateDebateFormData, string>>>({})
   const [generalError, setGeneralError] = useState<string>('');
 
-  // Image Upload state
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
 
-  /**
-   * Fetch tweet content from URL
-   */
   const handleFetchTweet = async () => {
     if (!tweetUrl.trim()) {
       setTweetError('Please enter a tweet URL');
       return;
     }
 
-    // Validate URL format
     if (!tweetUrl.match(/(?:twitter\.com|x\.com)\/\w+\/status\/\d+/i)) {
       setTweetError('Invalid URL. Please use a valid Twitter/X post URL (e.g., https://x.com/user/status/123)');
       return;
@@ -134,7 +125,6 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
 
       if (data.success && data.tweet) {
         setTweetData(data.tweet);
-        // Auto-fill topic with tweet content
         if (data.tweet.text) {
           setFormData(prev => ({ ...prev, topic: data.tweet.text }));
         }
@@ -172,16 +162,10 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
     if (input) input.value = '';
   };
 
-  /**
-   * Validate form data
-   * Returns true if valid, false otherwise
-   */
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof CreateDebateFormData, string>> = {};
 
-    // Validate topic
     if (sourceMode === 'tweet') {
-      // In tweet mode, topic must be auto-filled from fetched tweet
       if (!formData.topic.trim()) {
         newErrors.topic = 'Please fetch a tweet first';
       }
@@ -195,7 +179,6 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
       }
     }
 
-    // Validate description
     if (!formData.description.trim()) {
       newErrors.description = 'Description is required';
     } else if (formData.description.length < VALIDATION.DESCRIPTION_MIN_LENGTH) {
@@ -204,7 +187,6 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
       newErrors.description = `Description must be ${VALIDATION.DESCRIPTION_MAX_LENGTH} characters or less`;
     }
 
-    // Validate duration
     if (!formData.duration) {
       newErrors.duration = 'Duration is required';
     } else if (!DURATION_OPTIONS.find(opt => opt.value === formData.duration)) {
@@ -215,28 +197,22 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
     return Object.keys(newErrors).length === 0;
   };
 
-  /**
-   * Handle form submission
-   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Clear previous errors
+
     setGeneralError('');
 
-    // Check authentication
     if (!authenticated || !user) {
       setGeneralError('You must be logged in to create a debate');
       return;
     }
 
-    // Check if signer is ready
     if (!signerReady || !client) {
       setGeneralError('Wallet is not ready. Please wait a moment and try again.');
       return;
     }
 
-    // Validate form
     if (!validateForm()) {
       return;
     }
@@ -248,14 +224,11 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
         metadata: { topic: formData.topic, duration: formData.duration }
       });
 
-      // Convert duration to minutes for both contract and database (integer)
       const durationMinutes = durationToMinutes(formData.duration);
 
-      // Prepare parameters
       const finalMaxParticipants = useCustomParticipants ? maxParticipants : DEFAULT_MAX_PARTICIPANTS;
       const finalCriteria = useCustomCriteria ? criteria : DEFAULT_EVALUATION_CRITERIA;
 
-      // Upload Image if selected
       let finalImageUrl: string | null = null;
       if (imageFile) {
         try {
@@ -272,12 +245,11 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
         }
       }
 
-      // Deploy contract to blockchain using client from hook
       const { contractAddress } = await deployDebateContract(
         client,
         formData.topic.trim(),
         formData.description.trim(),
-        durationMinutes, // Send minutes as integer to contract
+        durationMinutes,
         finalMaxParticipants,
         finalCriteria
       );
@@ -287,37 +259,29 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
         metadata: { topic: formData.topic }
       });
 
-      // HYBRID APPROACH: Try immediate sync with retry, fallback to queue if it fails
-      // Database will calculate end_time = created_at + duration_minutes for UI countdown
-      // Contract timer starts when first participant joins (for blockchain logic)
-
       let syncSuccess = false;
       let retryCount = 0;
       const maxRetries = 3;
 
       while (!syncSuccess && retryCount < maxRetries) {
         try {
-          // Calculate end_time for database (timer starts NOW for UI)
           const now = new Date();
-          // Calculate end_time using minutes
           const endTime = new Date(now.getTime() + durationMinutes * 60 * 1000);
 
-          // Wait a bit before first retry (give blockchain time to process)
           if (retryCount > 0) {
-            await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
+            await new Promise(resolve => setTimeout(resolve, 2000));
             console.log(`Retry ${retryCount}/${maxRetries} - Attempting to sync debate...`);
           }
 
-          // Create debate directly in database (no need to fetch from blockchain)
           await supabaseApi.createDebate({
             contract_address: contractAddress,
             topic: formData.topic.trim(),
             description: formData.description.trim(),
-            duration_minutes: durationMinutes, // Use minutes (INTEGER)
+            duration_minutes: durationMinutes,
             end_time: endTime,
             status: 'OPEN',
             participant_count: 0,
-            max_participants: finalMaxParticipants, // Custom or default (10)
+            max_participants: finalMaxParticipants,
             evaluation_criteria: finalCriteria as unknown as Record<string, number>,
             last_synced_at: null,
             image_url: finalImageUrl,
@@ -332,14 +296,12 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
             metadata: { topic: formData.topic, retryCount }
           });
 
-          // Show success message
           toast.success('Debate created successfully!', 'Your debate is now live.');
 
         } catch (syncError) {
           retryCount++;
 
           if (retryCount >= maxRetries) {
-            // Max retries reached, try to queue for background processing
             logger.warn(LogCategory.UI, 'Immediate sync failed after retries, attempting to queue', {
               contractAddress,
               metadata: {
@@ -349,7 +311,6 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
               }
             });
 
-            // Skip queueing if sync_queue table doesn't exist yet
             const errorMessage = syncError instanceof Error ? syncError.message : '';
             if (errorMessage.includes('sync_queue') || errorMessage.includes('attempts')) {
               logger.warn(LogCategory.UI, 'Sync queue table not ready, skipping queue', {
@@ -357,7 +318,6 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                 metadata: { topic: formData.topic }
               });
 
-              // Show success message anyway (contract is deployed)
               toast.success(
                 'Debate created successfully!',
                 'Your debate has been deployed. Please refresh the page in a few minutes to see it.'
@@ -378,7 +338,7 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                 },
                 attempts: 0,
                 max_attempts: 5,
-                next_retry_at: new Date(Date.now() + 60000), // Retry in 1 minute
+                next_retry_at: new Date(Date.now() + 60000),
                 status: 'pending',
                 last_error: null,
               });
@@ -388,21 +348,18 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                 metadata: { topic: formData.topic }
               });
 
-              // Show success message with note about delay
               toast.success(
                 'Debate created successfully!',
                 'Your debate will appear in a few minutes as the blockchain processes it.'
               );
 
             } catch (queueError) {
-              // Even queueing failed - log but don't fail the whole operation
               logger.error(
                 LogCategory.UI,
                 'Failed to queue sync operation',
                 queueError instanceof Error ? queueError : new Error(String(queueError))
               );
 
-              // Show success message anyway (contract is deployed)
               toast.success(
                 'Debate created successfully!',
                 'Your debate has been deployed. Please refresh in a few minutes.'
@@ -412,11 +369,9 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
         }
       }
 
-      // Call success callback or redirect (proceed even if sync failed)
       if (onSuccess) {
         onSuccess(contractAddress);
       } else {
-        // Redirect to debates list instead of detail page to avoid read errors
         router.push('/debates');
       }
     } catch (error) {
@@ -426,7 +381,6 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
         error instanceof Error ? error : new Error(String(error))
       );
 
-      // Set user-friendly error message
       if (error instanceof Error) {
         setGeneralError(error.message);
       } else {
@@ -437,21 +391,16 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
     }
   };
 
-  /**
-   * Handle input changes
-   */
   const handleChange = (
     field: keyof CreateDebateFormData,
     value: string
   ) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Clear error for this field when user starts typing
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
   };
 
-  // Character counts
   const topicCharCount = formData.topic.length;
   const descriptionCharCount = formData.description.length;
 
@@ -466,7 +415,6 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
-            {/* Source Mode Toggle */}
             <div className="space-y-2">
               <Label className="text-sm md:text-base">Debate Source</Label>
               <div className="grid grid-cols-2 gap-2">
@@ -506,7 +454,6 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
               </div>
             </div>
 
-            {/* Tweet URL Input (Tweet mode only) */}
             {sourceMode === 'tweet' && (
               <div className="space-y-3">
                 <Label htmlFor="tweet-url" className="text-sm md:text-base">
@@ -542,7 +489,6 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                   <p className="text-xs text-red-500">{tweetError}</p>
                 )}
 
-                {/* Tweet Preview */}
                 {tweetData && tweetData.text && (
                   <div className="rounded-lg border bg-muted/30 p-4 space-y-2">
                     <div className="flex items-center gap-2">
@@ -568,14 +514,12 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                   </div>
                 )}
 
-                {/* Show topic validation error in tweet mode */}
                 {errors.topic && (
                   <p className="text-xs text-red-500">{errors.topic}</p>
                 )}
               </div>
             )}
 
-            {/* Topic Field - Only show in Manual mode */}
             {sourceMode === 'manual' && (
               <div className="space-y-2">
                 <Label htmlFor="topic" className="text-sm md:text-base">
@@ -601,7 +545,6 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
               </div>
             )}
 
-            {/* Cover Image Field (Optional) */}
             <div className="space-y-2">
               <Label className="text-sm md:text-base">Cover Image (Optional)</Label>
               <div
@@ -646,7 +589,6 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
               </div>
             </div>
 
-            {/* Description Field */}
             <div className="space-y-2">
               <Label htmlFor="description" className="text-sm md:text-base">
                 Description <span className="text-red-500">*</span>
@@ -670,7 +612,6 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
               </div>
             </div>
 
-            {/* Duration Field */}
             <div className="space-y-2">
               <Label htmlFor="duration" className="text-sm md:text-base">
                 Duration <span className="text-red-500">*</span>
@@ -696,7 +637,6 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
               </p>
             </div>
 
-            {/* Max Participants Field */}
             <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
               <div className="flex items-center justify-between">
                 <Label className="text-sm md:text-base font-medium">
@@ -711,9 +651,9 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                     onCheckedChange={(checked) => {
                       setUseCustomParticipants(checked);
                       if (checked) {
-                        setMaxParticipants(20); // Default to 20 when custom is enabled
+                        setMaxParticipants(20);
                       } else {
-                        setMaxParticipants(10); // Reset to default
+                        setMaxParticipants(10);
                       }
                     }}
                     disabled={isSubmitting}
@@ -748,7 +688,6 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
               </p>
             </div>
 
-            {/* Evaluation Criteria Field */}
             <div className="space-y-3 p-4 border rounded-lg bg-muted/30">
               <div className="flex items-center justify-between">
                 <Label className="text-sm md:text-base font-medium">
@@ -908,7 +847,6 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
                     </div>
                   </div>
 
-                  {/* Total Counter */}
                   {(() => {
                     const total = criteria.logic_reasoning + criteria.evidence_facts + criteria.clarity +
                       criteria.relevance + criteria.originality + criteria.persuasiveness;
@@ -930,14 +868,12 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
               )}
             </div>
 
-            {/* General Error Message */}
             {generalError && (
               <div className="p-3 bg-red-50 border border-red-200 rounded-md">
                 <p className="text-xs md:text-sm text-red-600 break-words">{generalError}</p>
               </div>
             )}
 
-            {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-3 justify-end">
               {onCancel && (
                 <Button
@@ -959,14 +895,12 @@ export function CreateDebateForm({ onSuccess, onCancel }: CreateDebateFormProps)
               </Button>
             </div>
 
-            {/* Authentication Warning */}
             {!authenticated && (
               <p className="text-xs md:text-sm text-amber-600 text-center">
                 Please log in to create a debate
               </p>
             )}
 
-            {/* Wallet Loading Warning */}
             {authenticated && !signerReady && (
               <p className="text-xs md:text-sm text-amber-600 text-center">
                 Initializing wallet...

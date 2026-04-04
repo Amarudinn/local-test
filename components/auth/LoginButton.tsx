@@ -1,10 +1,3 @@
-/**
- * LoginButton Component
- * 
- * Displays a login button that triggers the Privy authentication modal.
- * Shows different states based on authentication status.
- */
-
 'use client';
 
 import { useAuth } from '@/lib/hooks/useAuth';
@@ -26,7 +19,6 @@ export function LoginButton({
 }: LoginButtonProps) {
   const { isAuthenticated, isLoading, login } = useAuth();
 
-  // Don't show login button if already authenticated
   if (isAuthenticated) {
     return null;
   }
@@ -45,12 +37,6 @@ export function LoginButton({
   );
 }
 
-/**
- * ConnectWalletButton Component
- * 
- * Specialized button for wallet connection.
- * Can be used when user is already authenticated but wants to connect a wallet.
- */
 export function ConnectWalletButton({
   variant = 'outline',
   size = 'default',

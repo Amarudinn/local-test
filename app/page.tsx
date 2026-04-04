@@ -15,10 +15,8 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen flex-col">
-      {/* Shared Navbar */}
       <Navbar />
 
-      {/* Hero Section */}
       <div className="flex-1 flex flex-col items-center justify-center p-4 md:p-6 lg:p-8">
         <div className="max-w-3xl w-full text-center space-y-4 md:space-y-6">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight">
@@ -31,7 +29,6 @@ export default function Home() {
             Create debate rooms, submit arguments, and have AI judges determine winners
           </p>
 
-          {/* Authentication Status */}
           <div className="pt-6 md:pt-8">
             {isLoading && (
               <p className="text-sm md:text-base text-muted-foreground">Loading authentication...</p>
@@ -46,7 +43,6 @@ export default function Home() {
             )}
             {!isLoading && isAuthenticated && user && (
               <div className="space-y-4 px-2">
-                {/* Content simplified: Auth details hidden as they are in Navbar */}
                 <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center mt-4">
                   <Button
                     size="lg"
@@ -68,7 +64,6 @@ export default function Home() {
             )}
           </div>
 
-          {/* Features */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 pt-8 md:pt-12 px-2">
             <div className="p-4 md:p-6 border rounded-lg hover:shadow-md transition-shadow">
               <h3 className="text-base md:text-lg font-semibold mb-2">Create Debates</h3>
@@ -92,7 +87,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Footer */}
       <footer className="border-t py-4 md:py-6">
         <div className="container mx-auto px-4 text-center text-xs md:text-sm text-muted-foreground">
           <p>Powered by GenLayer</p>

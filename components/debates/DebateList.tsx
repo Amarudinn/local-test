@@ -8,17 +8,11 @@ import { supabaseApi } from '@/lib/supabase-client';
 import { Debate } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 
-/**
- * DebateList component displays a filterable list of debates
- * Supports filtering by status: Open (includes OPEN + ONGOING), Ended, Resolved, All
- * Debates are sorted by creation time (newest first)
- */
 export function DebateList() {
   const [activeTab, setActiveTab] = useState<'all' | 'OPEN' | 'ENDED' | 'RESOLVED'>('OPEN'); // Default to OPEN
   const [isRefreshing, setIsRefreshing] = useState(false);
   const queryClient = useQueryClient();
 
-  // Fetch debates using TanStack Query
   const { data: debates, isLoading, error } = useQuery({
     queryKey: ['debates', activeTab],
     queryFn: async () => {
@@ -27,11 +21,9 @@ export function DebateList() {
       if (activeTab === 'all') {
         fetchedDebates = await supabaseApi.getDebates();
       } else if (activeTab === 'OPEN') {
-        // Special handling for OPEN tab: fetch both OPEN and ONGOING debates
         const openDebates = await supabaseApi.getDebates({ status: 'OPEN' });
         const ongoingDebates = await supabaseApi.getDebates({ status: 'ONGOING' });
 
-        // Combine and sort by creation time (newest first)
         fetchedDebates = [...openDebates, ...ongoingDebates].sort((a, b) =>
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         );
@@ -39,14 +31,12 @@ export function DebateList() {
         fetchedDebates = await supabaseApi.getDebates({ status: activeTab });
       }
 
-      // Auto-update debates that have passed their end_time to ENDED status
       const now = new Date();
       for (const debate of fetchedDebates) {
         if ((debate.status === 'OPEN' || debate.status === 'ONGOING') && new Date(debate.end_time) < now) {
-          // Update status to ENDED in database
           try {
             await supabaseApi.updateDebate(debate.id, { status: 'ENDED' });
-            debate.status = 'ENDED'; // Update local data too
+            debate.status = 'ENDED';
 
           } catch (error) {
             console.warn(`Failed to auto-update debate ${debate.id} to ENDED:`, error);
@@ -54,41 +44,33 @@ export function DebateList() {
         }
       }
 
-      // Filter out ENDED debates from OPEN tab after auto-update
       if (activeTab === 'OPEN') {
         return fetchedDebates.filter(d => d.status === 'OPEN' || d.status === 'ONGOING');
       }
 
       return fetchedDebates;
     },
-    refetchInterval: 10000, // Refetch every 10 seconds to keep data fresh
+    refetchInterval: 10000,
   });
 
-  // Handle manual refresh - smart sync from blockchain
   const handleRefresh = async () => {
     setIsRefreshing(true);
     try {
 
-
-      // Get all debates from database first
       const allDebates = await supabaseApi.getDebates();
 
-      // SMART FILTER: Only sync debates that need updating
       const now = new Date();
-      const SYNC_INTERVAL_SECONDS = 30; // Only sync if last sync was > 30 seconds ago
+      const SYNC_INTERVAL_SECONDS = 30; 
 
       const debatesToSync = allDebates.filter(debate => {
-        // Skip ENDED and RESOLVED debates (they don't change)
         if (debate.status === 'ENDED' || debate.status === 'RESOLVED') {
           return false;
         }
 
-        // Always sync if never synced before
         if (!debate.last_synced_at) {
           return true;
         }
 
-        // Check if enough time has passed since last sync
         const lastSync = new Date(debate.last_synced_at);
         const secondsSinceSync = (now.getTime() - lastSync.getTime()) / 1000;
 
@@ -96,48 +78,32 @@ export function DebateList() {
       });
 
 
-
-      // Sync only the debates that need updating
       for (const debate of debatesToSync) {
         try {
-          // Import blockchain client and sync functions
           const { getDebateInfo, getParticipants } = await import('@/lib/genlayer-client');
           const { syncParticipantsToDatabase } = await import('@/lib/sync-service');
 
-          // Fetch from blockchain
           const blockchainInfo = await getDebateInfo(debate.contract_address);
           const blockchainParticipants = await getParticipants(debate.contract_address);
-
-
-
-          // Determine correct status based on participant count
           let correctStatus = blockchainInfo.status;
           if (blockchainParticipants.length > 0 && blockchainInfo.status === 'OPEN') {
             correctStatus = 'ONGOING';
           }
 
-          // Update debate with new data + sync timestamp
           await supabaseApi.updateDebate(debate.id, {
             status: correctStatus as 'OPEN' | 'ONGOING' | 'ENDED' | 'RESOLVED',
             participant_count: blockchainParticipants.length,
-            last_synced_at: new Date(), // Record sync time
+            last_synced_at: new Date(),
           });
 
-
-
-          // Sync participants to database
           if (blockchainParticipants.length > 0) {
             await syncParticipantsToDatabase(debate.contract_address, blockchainParticipants);
           }
         } catch (error) {
           console.warn(`Failed to sync debate ${debate.contract_address}:`, error);
-          // Continue with next debate even if one fails
         }
       }
 
-
-
-      // Invalidate all debate queries to force refetch from database
       await queryClient.invalidateQueries({ queryKey: ['debates'] });
     } catch (error) {
       console.error('❌ Failed to refresh debates:', error);
@@ -146,7 +112,6 @@ export function DebateList() {
     }
   };
 
-  // Loading state
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -158,7 +123,6 @@ export function DebateList() {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -174,9 +138,7 @@ export function DebateList() {
 
   return (
     <div className="space-y-4 md:space-y-6">
-      {/* Filter Buttons and Refresh Button */}
       <div className="flex items-center justify-between gap-4">
-        {/* Filter Buttons - Left Side */}
         <div className="flex items-center gap-2">
           <Button
             variant={activeTab === 'OPEN' ? 'default' : 'outline'}
@@ -212,7 +174,6 @@ export function DebateList() {
           </Button>
         </div>
 
-        {/* Refresh Button - Right Side */}
         <Button
           variant="outline"
           size="sm"
@@ -236,7 +197,6 @@ export function DebateList() {
         </Button>
       </div>
 
-      {/* Debate Cards or Empty State */}
       <div>
         {!debates || debates.length === 0 ? (
           <div className="flex items-center justify-center py-12">
@@ -259,7 +219,6 @@ export function DebateList() {
               ))}
             </div>
 
-            {/* Debate count */}
             <div className="text-center text-xs md:text-sm text-muted-foreground mt-4">
               Showing {debates.length} {debates.length === 1 ? 'debate' : 'debates'}
             </div>

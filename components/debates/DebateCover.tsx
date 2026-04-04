@@ -25,7 +25,6 @@ export function DebateCover({ topic, imageUrl, className, priority = false }: De
         );
     }
 
-    // Fallback: Deterministic Abstract Gradient
     return (
         <div
             className={cn("w-full h-full", className)}

@@ -3,10 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, Home, ArrowLeft } from 'lucide-react';
 
-/**
- * Custom 404 Not Found page
- * Displayed when a route doesn't exist
- */
 export default function NotFound() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">

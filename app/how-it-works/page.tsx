@@ -49,7 +49,6 @@ export default function HowItWorksPage() {
             <main className="flex-1 container mx-auto px-4 py-12 md:py-20">
                 <div className="max-w-3xl mx-auto space-y-12">
 
-                    {/* Header */}
                     <div className="text-center space-y-4">
                         <h1 className="text-3xl md:text-5xl font-bold tracking-tight">
                             How <span className="text-primary">Debate Room</span> Works
@@ -60,12 +59,10 @@ export default function HowItWorksPage() {
                         </p>
                     </div>
 
-                    {/* Steps */}
                     <div className="grid gap-6 md:gap-8">
                         {steps.map((step) => {
                             return (
                                 <div key={step.id} className="relative">
-                                    {/* Content Card */}
                                     <Card className="hover:shadow-md transition-shadow">
                                         <CardContent className="p-6">
                                             <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-4 mb-2">
@@ -84,7 +81,6 @@ export default function HowItWorksPage() {
                         })}
                     </div>
 
-                    {/* CTA */}
                     <div className="text-center pt-8">
                         <Link href="/debates">
                             <Button size="lg" className="h-12 px-8 text-lg gap-2">

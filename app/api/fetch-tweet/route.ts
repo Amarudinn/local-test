@@ -1,19 +1,7 @@
-/**
- * API Route: Fetch Tweet Content
- * 
- * Fetches tweet content from a tweet URL using multiple methods:
- * 1. FxTwitter API (full text, no auth needed, no truncation)
- * 2. VxTwitter API (fallback, also full text)
- * 3. Twitter oEmbed API (last resort, may truncate)
- * 
- * Returns tweet text content for use as debate topic.
- */
-
 import { NextRequest, NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
 
-// Extract tweet ID from various URL formats
 function extractTweetId(url: string): string | null {
   const patterns = [
     /(?:twitter\.com|x\.com)\/\w+\/status\/(\d+)/i,
@@ -27,18 +15,16 @@ function extractTweetId(url: string): string | null {
   return null;
 }
 
-// Extract username from tweet URL
 function extractUsername(url: string): string | null {
   const match = url.match(/(?:twitter\.com|x\.com)\/(\w+)\/status/i);
   return match ? match[1] : null;
 }
 
-// Clean tweet text: remove t.co links, pic links, preserve paragraph breaks
 function cleanTweetText(text: string): string {
   return text
-    .replace(/https?:\/\/t\.co\/\w+/gi, '')      // Remove t.co links
-    .replace(/pic\.twitter\.com\/\w+/gi, '')      // Remove pic.twitter.com links
-    .replace(/\n{3,}/g, '\n\n')                   // Collapse 3+ newlines to double (paragraph break)
+    .replace(/https?:\/\/t\.co\/\w+/gi, '')
+    .replace(/pic\.twitter\.com\/\w+/gi, '')
+    .replace(/\n{3,}/g, '\n\n')
     .split('\n')
     .map(line => line.trim())
     .join('\n')
@@ -57,7 +43,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate URL format
     const tweetId = extractTweetId(url);
     const username = extractUsername(url);
 
@@ -68,12 +53,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Normalize the URL to x.com format
     const normalizedUrl = `https://x.com/${username}/status/${tweetId}`;
 
-    // ──────────────────────────────────────────────────
-    // Method 1: FxTwitter API (full text, no truncation)
-    // ──────────────────────────────────────────────────
     try {
       const fxUrl = `https://api.fxtwitter.com/${username}/status/${tweetId}`;
 
@@ -111,9 +92,6 @@ export async function POST(request: NextRequest) {
       console.warn('FxTwitter API failed, trying VxTwitter:', fxError);
     }
 
-    // ──────────────────────────────────────────────────
-    // Method 2: VxTwitter API (full text, no truncation)
-    // ──────────────────────────────────────────────────
     try {
       const vxUrl = `https://api.vxtwitter.com/${username}/status/${tweetId}`;
 
@@ -151,9 +129,6 @@ export async function POST(request: NextRequest) {
       console.warn('VxTwitter API failed, trying oEmbed:', vxError);
     }
 
-    // ──────────────────────────────────────────────────
-    // Method 3: Twitter oEmbed API (may truncate long tweets)
-    // ──────────────────────────────────────────────────
     try {
       const oembedUrl = `https://publish.twitter.com/oembed?url=${encodeURIComponent(normalizedUrl)}&omit_script=true&hide_media=true&hide_thread=true`;
       
@@ -179,7 +154,6 @@ export async function POST(request: NextRequest) {
             .replace(/&ndash;/g, '–')
             .trim();
 
-          // Remove trailing "— Author (@handle) Date" attribution
           const dashNewlineIndex = tweetText.lastIndexOf('\n—');
           if (dashNewlineIndex !== -1) {
             tweetText = tweetText.substring(0, dashNewlineIndex).trim();
@@ -216,9 +190,6 @@ export async function POST(request: NextRequest) {
       console.warn('oEmbed fetch failed:', oembedError);
     }
 
-    // ──────────────────────────────────────────────────
-    // Fallback: Return basic info from URL parsing
-    // ──────────────────────────────────────────────────
     return NextResponse.json({
       success: true,
       tweet: {

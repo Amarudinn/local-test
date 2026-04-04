@@ -27,9 +27,7 @@ export default function DocsPage() {
                             <TabsTrigger value="technical">Technical</TabsTrigger>
                         </TabsList>
 
-                        {/* OVERVIEW TAB */}
                         <TabsContent value="overview" className="space-y-8">
-                            {/* Introduction */}
                             <section className="space-y-4">
                                 <h2 className="text-2xl font-bold flex items-center gap-2">
                                     <BookOpen className="w-6 h-6 text-primary" />
@@ -42,7 +40,6 @@ export default function DocsPage() {
                                 </p>
                             </section>
 
-                            {/* How It Works */}
                             <section className="space-y-6">
                                 <h2 className="text-2xl font-bold">How It Works</h2>
 
@@ -85,7 +82,6 @@ export default function DocsPage() {
                                 </div>
                             </section>
 
-                            {/* Lifecycle Status */}
                             <section className="space-y-4">
                                 <h2 className="text-2xl font-bold">Debate Lifecycle</h2>
                                 <div className="space-y-4">
@@ -129,10 +125,8 @@ export default function DocsPage() {
                             </section>
                         </TabsContent>
 
-                        {/* TECHNICAL TAB */}
                         <TabsContent value="technical" className="space-y-8">
 
-                            {/* Architecture Overview */}
                             <section className="space-y-4">
                                 <h2 className="text-2xl font-bold flex items-center gap-2">
                                     <Layers className="w-6 h-6 text-primary" />
@@ -153,7 +147,6 @@ export default function DocsPage() {
                                 </Card>
                             </section>
 
-                            {/* Smart Contracts */}
                             <section className="space-y-4">
                                 <h2 className="text-2xl font-bold flex items-center gap-2">
                                     <Code className="w-6 h-6 text-primary" />
@@ -198,7 +191,6 @@ export default function DocsPage() {
                                 </div>
                             </section>
 
-                            {/* AI Jury */}
                             <section className="space-y-4">
                                 <h2 className="text-2xl font-bold flex items-center gap-2">
                                     <Zap className="w-6 h-6 text-primary" />
@@ -225,7 +217,6 @@ export default function DocsPage() {
                                 </div>
                             </section>
 
-                            {/* Security */}
                             <section className="space-y-4">
                                 <h2 className="text-2xl font-bold flex items-center gap-2">
                                     <Shield className="w-6 h-6 text-primary" />

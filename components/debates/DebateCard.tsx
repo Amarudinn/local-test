@@ -14,47 +14,34 @@ interface DebateCardProps {
   debate: Debate;
 }
 
-/**
- * DebateCard component displays a preview of a debate
- * Shows topic, creator, participant count, status, and time remaining
- * Tweet-sourced debates show @username and View original tweet link
- */
 export function DebateCard({ debate }: DebateCardProps) {
   const router = useRouter();
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Check if topic is long (more than 80 characters)
   const isLongTopic = debate.topic.length > 80;
   const isTweet = debate.source_type === 'tweet';
 
-  // Extract @username from source_url
   const tweetUsername = isTweet && debate.source_url
     ? debate.source_url.match(/(?:twitter\.com|x\.com)\/(\w+)\/status/i)?.[1] || null
     : null;
 
-  // Handle card click
   const handleClick = () => {
     router.push(`/debates/${debate.contract_address}`);
   };
 
-  // Handle show more/less toggle - prevent card navigation
   const handleToggleExpand = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click
+    e.stopPropagation();
     setIsExpanded(!isExpanded);
   };
 
-  // Calculate end time from database
   const endTimeValue = new Date(debate.end_time).getTime();
   const isActive = endTimeValue > Date.now();
 
-  // Check if time has expired (client-side check)
   const timeHasExpired = endTimeValue <= Date.now();
 
-  // Compute effective status for display
   const effectiveStatus =
     debate.status === 'ONGOING' && timeHasExpired ? 'ENDED' : debate.status;
 
-  // Check if debate is full
   const maxParticipants = debate.max_participants !== undefined && debate.max_participants !== null
     ? debate.max_participants
     : 10;
@@ -65,7 +52,6 @@ export function DebateCard({ debate }: DebateCardProps) {
       className="cursor-pointer transition-all hover:shadow-lg hover:scale-[1.02] flex flex-col overflow-hidden"
       onClick={handleClick}
     >
-      {/* Cover image — always shown */}
       <DebateCover topic={debate.topic} imageUrl={debate.image_url} className="h-32 w-full flex-shrink-0" />
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-2">
@@ -95,7 +81,6 @@ export function DebateCard({ debate }: DebateCardProps) {
       </CardHeader>
       <CardContent className="pt-0 mt-auto">
         <div className="space-y-2 text-xs md:text-sm text-muted-foreground">
-          {/* Tweet source info — @username (left) | View original tweet (right) */}
           {isTweet && debate.source_url && (
             <div className="flex items-center justify-between gap-2 pb-1 border-b">
               <span className="flex items-center gap-1 font-medium">

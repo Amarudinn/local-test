@@ -22,13 +22,10 @@ export default function RoadmapPage() {
 
                     <div className="grid gap-8 relative px-4 border-l-2 border-border ml-4 md:ml-0 md:px-0 md:border-l-0">
 
-                        {/* Phase 1: Classic Debate (Completed) */}
                         <div className="relative md:flex md:gap-8 items-start group">
-                            {/* Timeline Dot (Desktop) */}
                             <div className="hidden md:flex flex-shrink-0 w-8 h-8 rounded-full bg-muted border-2 border-green-500 items-center justify-center mt-1 z-10 relative">
                                 <div className="w-3 h-3 bg-green-500 rounded-full" />
                             </div>
-                            {/* Timeline Line (Desktop) */}
                             <div className="hidden md:block absolute left-4 top-9 bottom-[-32px] w-0.5 bg-border -z-10 group-last:hidden" />
 
                             <Card className="flex-1 border-green-500/20 bg-green-500/5">
@@ -55,7 +52,6 @@ export default function RoadmapPage() {
                             </Card>
                         </div>
 
-                        {/* Phase 2: Modern Debate (Live Now) */}
                         <div className="relative md:flex md:gap-8 items-start group">
                             <div className="hidden md:flex flex-shrink-0 w-8 h-8 rounded-full bg-primary items-center justify-center mt-1 z-10 relative">
                                 <div className="w-3 h-3 bg-background rounded-full" />
@@ -84,7 +80,6 @@ export default function RoadmapPage() {
                             </Card>
                         </div>
 
-                        {/* Phase 3: Rewards System */}
                         <div className="relative md:flex md:gap-8 items-start group">
                             <div className="hidden md:flex flex-shrink-0 w-8 h-8 rounded-full bg-muted border-2 border-primary/50 items-center justify-center mt-1 z-10 relative">
                                 <div className="w-2 h-2 bg-primary/50 rounded-full" />
@@ -115,7 +110,6 @@ export default function RoadmapPage() {
                             </Card>
                         </div>
 
-                        {/* Phase 4: Future */}
                         <div className="relative md:flex md:gap-8 items-start group">
                             <div className="hidden md:flex flex-shrink-0 w-8 h-8 rounded-full bg-muted items-center justify-center mt-1 z-10">
                                 <div className="w-2 h-2 bg-muted-foreground rounded-full" />

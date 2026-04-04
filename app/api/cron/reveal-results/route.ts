@@ -1,27 +1,10 @@
-/**
- * Cron Job: Reveal Results
- * 
- * Automatically reveals evaluation results when debates end.
- * Also syncs results to leaderboard_results table for display.
- * 
- * Flow:
- * 1. Find debates that have ended (end_time < now) and status = 'ONGOING'
- * 2. Check if all evaluations are complete for each debate
- * 3. If complete: reveal evaluations and update debate status to RESOLVED
- * 4. Sync to leaderboard_results table
- * 
- * Should be called every 1 minute by external cron service (cron-job.org)
- */
-
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { logger, LogCategory } from '@/lib/logger';
 
-// Vercel serverless function config - 5 minute timeout
-export const maxDuration = 300; // 5 minutes in seconds
+export const maxDuration = 300;
 export const dynamic = 'force-dynamic';
 
-// Lazy-initialize Supabase client (avoid build-time errors)
 let supabase: SupabaseClient | null = null;
 
 function getSupabase(): SupabaseClient {
@@ -38,7 +21,6 @@ function getSupabase(): SupabaseClient {
     return supabase;
 }
 
-// Verify cron secret to prevent unauthorized access
 function verifyCronSecret(request: NextRequest): boolean {
     const authHeader = request.headers.get('authorization');
     const cronSecret = process.env.CRON_SECRET || 'your-secret-key-here';
@@ -52,7 +34,6 @@ function verifyCronSecret(request: NextRequest): boolean {
 }
 
 export async function GET(request: NextRequest) {
-    // Verify authorization
     if (!verifyCronSecret(request)) {
         return NextResponse.json(
             { error: 'Unauthorized' },
@@ -68,14 +49,8 @@ export async function GET(request: NextRequest) {
     });
 
     try {
-        // Get initialized Supabase client
         const client = getSupabase();
 
-        // ================================================================
-        // STEP 1: Auto-transition ONGOING/OPEN → ENDED for expired debates
-        // This fixes the gap where no server-side process was updating
-        // the database status when a debate's time expired.
-        // ================================================================
         const { data: expiredDebates, error: expiredError } = await client
             .from('debates')
             .select('id, contract_address, status')
@@ -110,9 +85,6 @@ export async function GET(request: NextRequest) {
             }
         }
 
-        // ================================================================
-        // STEP 2: Find all ENDED debates and process reveal
-        // ================================================================
         const { data: endedDebates, error: debatesError } = await client
             .from('debates')
             .select('id, contract_address, topic, participant_count')
@@ -150,7 +122,6 @@ export async function GET(request: NextRequest) {
 
         for (const debate of endedDebates) {
             try {
-                // Check if all evaluations are complete
                 const { data: pendingQueue, error: queueError } = await client
                     .from('evaluation_queue')
                     .select('id')
@@ -161,7 +132,6 @@ export async function GET(request: NextRequest) {
                     throw new Error(`Failed to check queue: ${queueError.message}`);
                 }
 
-                // If there are still pending evaluations, skip this debate
                 if (pendingQueue && pendingQueue.length > 0) {
                     logger.info(LogCategory.SYNC, 'Debate has pending evaluations, skipping', {
                         contractAddress: debate.contract_address,
@@ -171,7 +141,6 @@ export async function GET(request: NextRequest) {
                     continue;
                 }
 
-                // Get all evaluations for this debate
                 const { data: evaluations, error: evalError } = await client
                     .from('evaluations')
                     .select('*')
@@ -182,10 +151,7 @@ export async function GET(request: NextRequest) {
                     throw new Error(`Failed to fetch evaluations: ${evalError.message}`);
                 }
 
-                // Check if we have any evaluations
                 if (!evaluations || evaluations.length === 0) {
-                    // No evaluations means no participants submitted
-                    // Mark as resolved anyway but with no winner
                     await client
                         .from('debates')
                         .update({ status: 'RESOLVED' })
@@ -198,7 +164,6 @@ export async function GET(request: NextRequest) {
                     continue;
                 }
 
-                // Reveal all evaluations (set is_visible = true)
                 const { error: revealError } = await client
                     .from('evaluations')
                     .update({
@@ -211,15 +176,13 @@ export async function GET(request: NextRequest) {
                     throw new Error(`Failed to reveal evaluations: ${revealError.message}`);
                 }
 
-                // Sync to leaderboard_results table
-                const winner = evaluations[0];  // Highest score (already sorted)
+                const winner = evaluations[0];
 
                 for (let i = 0; i < evaluations.length; i++) {
                     const eval_item = evaluations[i];
                     const rank = i + 1;
                     const isWinner = rank === 1;
 
-                    // Upsert to leaderboard_results
                     const { error: leaderboardError } = await client
                         .from('leaderboard_results')
                         .upsert({
@@ -250,7 +213,6 @@ export async function GET(request: NextRequest) {
                     }
                 }
 
-                // Update debate status to RESOLVED
                 const { error: statusError } = await client
                     .from('debates')
                     .update({ status: 'RESOLVED' })
@@ -313,7 +275,6 @@ export async function GET(request: NextRequest) {
     }
 }
 
-// Allow POST for manual testing
 export async function POST(request: NextRequest) {
     return GET(request);
 }

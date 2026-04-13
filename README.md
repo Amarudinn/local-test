@@ -10,19 +10,19 @@
 
 ---
 
-## ✨ Features
+## Features
 
-- 🤖 **AI-Powered Judging** — Intelligent Contracts evaluate arguments using 6 scoring criteria
-- 🗳️ **Optimistic Democracy** — Consensus mechanism ensures no single AI can manipulate results
-- ⚖️ **Equivalence Principle** — Flexible tolerance for AI non-determinism without sacrificing integrity
-- 🐦 **Tweet Debates** — Import topics directly from Twitter/X
-- 🔐 **Multi-Auth** — Email, Social, or Wallet login via Privy
-- 📊 **Real-Time Scoring** — Live leaderboard with transparent score breakdowns
-- ⚡ **Hybrid Architecture** — Blockchain for trust, database for speed
+- **AI-Powered Judging** — Intelligent Contracts evaluate arguments using 6 scoring criteria
+- **Optimistic Democracy** — Consensus mechanism ensures no single AI can manipulate results
+- **Equivalence Principle** — Flexible tolerance for AI non-determinism without sacrificing integrity
+- **Tweet Debates** — Import topics directly from Twitter/X
+- **Multi-Auth** — Email, Social, or Wallet login via Privy
+- **Real-Time Scoring** — Live leaderboard with transparent score breakdowns
+- **Hybrid Architecture** — Blockchain for trust, database for speed
 
 ---
 
-## 🔴 The Problem We Solve
+## The Problem We Solve
 
 | Problem | Debate Room Solution |
 |---|---|
@@ -33,7 +33,7 @@
 
 ---
 
-## 🧠 Technology Pillars
+## Technology Pillars
 
 ### 1. Intelligent Contracts — *The Thinking Brain*
 
@@ -47,15 +47,15 @@ Debate Room:   AI analyzes arguments → multi-dimensional scoring → verified 
 ### 2. Optimistic Democracy — *Trustless Consensus*
 
 ```
-  🎯 Leader Node ──── AI Evaluation ────► 📊 Score
-                                            │
-                    ┌───────────────────────┤
-                    │           │           │
-              🔍 Validator  🔍 Validator  🔍 Validator
-                    │           │           │
-                    └─────────┬─────────────┘
-                              │
-                         ✅ Consensus
+  Leader Node ──── AI Evaluation ────► Score
+                                         │
+             ┌───────────────────────────┼───────────────────────────┐
+             │                           │                           │
+        Validator 1                 Validator 2                 Validator 3
+             │                           │                           │
+             └───────────────────────────┼───────────────────────────┘
+                                         │
+                                    Consensus
 ```
 
 - **Leader** evaluates using LLM → **Validators** independently verify → **Majority** accepts or appeals
@@ -72,13 +72,13 @@ def validator_fn(leader_result, validator_result):
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌──────────────┐    ┌──────────────────┐    ┌──────────────────┐
-│   Frontend   │◄──►│    Supabase DB   │◄──►│  GenLayer Chain  │
-│  Next.js 15  │    │  Fast Queries    │    │  Source of Truth  │
-│  TypeScript  │    │  Caching Layer   │    │  AI Judging       │
+│  Frontend    │    │   Supabase DB    │    │  GenLayer Chain  │
+│  Next.js 15  │◄──►│   Fast Queries   │◄──►│  Source of Truth │
+│  TypeScript  │    │   Caching Layer  │    │  AI Judging      │
 └──────────────┘    └──────────────────┘    └──────────────────┘
 ```
 
@@ -99,7 +99,7 @@ def validator_fn(leader_result, validator_result):
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 - Node.js 18+
@@ -141,7 +141,7 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 debate-room/
@@ -167,27 +167,22 @@ debate-room/
 
 ---
 
-## 🗺️ Roadmap
+## Roadmap
 
-### ✅ Now — Foundation
+### Now — Foundation
 - Classic & Modern Debate modes with AI judging
 - Tweet Debates (import from Twitter/X)
 - Real-time evaluation & leaderboard
 
-### 🔜 Next — Growth
-- 🏆 Token rewards for high-quality debaters
-- 📊 On-chain reputation system
-- 🌐 Multi-language debate support
+### Next — Growth
+- Token rewards for high-quality debaters
 
-### 🚀 Future — Expansion
-- 🏛️ DAO Governance Debates
-- 🤖 AI vs AI Debate Arena
-- 📜 Decentralized Dispute Resolution
-- 🗳️ Network State Deliberation
+### Future — Expansion
+- TBA
 
 ---
 
-## 🔗 GenLayer Alignment
+## GenLayer Alignment
 
 | GenLayer Vision | Our Implementation |
 |---|---|
@@ -198,7 +193,7 @@ debate-room/
 
 ---
 
-## 📜 Mission Statement
+## Mission Statement
 
 > *"Debate Room builds a future where every public discussion is judged by the strength of arguments, not the strength of authority. By combining Intelligent Contracts, Optimistic Democracy, and the Equivalence Principle from GenLayer Protocol, we create debate infrastructure that is fundamentally fair — where AI becomes the neutral judge, blockchain becomes the immutable witness, and decentralized consensus becomes the guarantee of justice."*
 

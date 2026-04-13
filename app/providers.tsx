@@ -10,6 +10,7 @@ import { logger, LogCategory } from '@/lib/logger';
 import { PrivyProviderWrapper } from './privy-provider-wrapper';
 import { AuthSyncHandler } from '@/components/auth/AuthSyncHandler';
 import { GenLayerSignerHandler } from '@/components/auth/GenLayerSignerHandler';
+import { InstallPWA } from '@/components/ui/install-pwa';
 import { isRetryable, classifyError, ErrorType } from '@/lib/error-handler';
 
 interface ProvidersProps {
@@ -84,8 +85,10 @@ export function Providers({ children }: ProvidersProps) {
           <AuthSyncHandler />
           <GenLayerSignerHandler />
           {children}
+          <InstallPWA />
         </QueryClientProvider>
       </PrivyProviderWrapper>
     </ErrorBoundary>
   );
 }
+

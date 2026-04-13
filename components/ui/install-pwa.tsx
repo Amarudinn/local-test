@@ -153,7 +153,7 @@ export function InstallPWA() {
               'hover:bg-muted/80 transition-colors',
               'focus:outline-none focus:ring-2 focus:ring-primary/50'
             )}
-            aria-label="Tutup"
+            aria-label="Close"
           >
             <X className="h-4 w-4" />
           </button>
@@ -180,7 +180,7 @@ export function InstallPWA() {
                     <span className="inline-flex items-center gap-0.5 text-primary font-medium">
                       <Share className="h-3 w-3" /> Share
                     </span>{' '}
-                    lalu pilih{' '}
+                    then select{' '}
                     <span className="inline-flex items-center gap-0.5 text-primary font-medium">
                       <Plus className="h-3 w-3" /> Add to Home Screen
                     </span>
@@ -223,7 +223,7 @@ export function InstallPWA() {
                     Install Debate Room
                   </h3>
                   <p className="text-xs text-muted-foreground mb-3">
-                    Akses lebih cepat langsung dari home screen
+                    Quick access directly from your home screen
                   </p>
 
                   <div className="flex items-center gap-2">
@@ -241,7 +241,7 @@ export function InstallPWA() {
                       )}
                     >
                       <Download className={cn('h-3.5 w-3.5', isInstalling && 'animate-bounce')} />
-                      {isInstalling ? 'Installing...' : 'Install App'}
+                      {isInstalling ? 'Installing...' : 'Install'}
                     </button>
 
                     <button
@@ -252,7 +252,7 @@ export function InstallPWA() {
                         'hover:bg-muted/80 transition-colors'
                       )}
                     >
-                      Nanti
+                      Later
                     </button>
                   </div>
                 </div>

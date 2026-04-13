@@ -36,6 +36,7 @@
     "genlayer-js": "^0.18.9",
     "lucide-react": "^0.344.0",
     "next": "^15.0.0",
+    "next-pwa": "^5.6.0",
     "postcss": "^8.4.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
@@ -50,6 +51,7 @@
     "@types/react-dom": "^18.3.0",
     "eslint": "^8.0.0",
     "eslint-config-next": "^15.0.0",
+    "sharp": "^0.34.5",
     "typescript": "^5.3.0"
   },
   "optionalDependencies": {

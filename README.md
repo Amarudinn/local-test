@@ -1,4 +1,4 @@
-# 🏛️ Debate Room
+# Debate Room
 
 > **"Where Arguments Meet Consensus"** — Trustless AI-Powered Debates on GenLayer
 

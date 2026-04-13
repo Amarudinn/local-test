@@ -18,11 +18,7 @@ declare global {
 }
 
 const DISMISS_STORAGE_KEY = 'pwa-install-dismissed';
-const DISMISS_DURATION_DAYS = 1; // Show again after 1 days
-
-// TODO: TESTING ONLY — set to 1 minute. Revert to days after testing.
-const DISMISS_DURATION_MS = 1 * 60 * 1000; // 1 minute (for testing)
-// const DISMISS_DURATION_MS = DISMISS_DURATION_DAYS * 24 * 60 * 60 * 1000; // ← uncomment this for production
+const DISMISS_DURATION_MS = 1 * 24 * 60 * 60 * 1000; // 1 day
 
 function isDismissed(): boolean {
   if (typeof window === 'undefined') return true;
